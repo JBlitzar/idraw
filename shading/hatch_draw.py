@@ -5,15 +5,15 @@ import cv2
 import numpy as np
 
 
-hatch_bins = 5
+hatch_bins = 3
 
-img = cv2.imread("mona_lisa.jpg", cv2.IMREAD_GRAYSCALE)
+img = cv2.imread("portrait.jpg", cv2.IMREAD_GRAYSCALE)
 img = cv2.equalizeHist(img)
 WIDTH_PX = 100
 img = cv2.resize(img, (WIDTH_PX, int(img.shape[0] * WIDTH_PX / img.shape[1])))
 img = cv2.GaussianBlur(img, (5, 5), 0)
 
-WIDTH_IN = 2
+WIDTH_IN = 5
 pix2in = WIDTH_IN / img.shape[1]
 in2pix = img.shape[1] / WIDTH_IN
 
@@ -101,7 +101,7 @@ ad.penup()
 
 ad.goto(0, 0)
 
-for idx, mask in enumerate(hatch_masks[1:]):
+for idx, mask in enumerate(hatch_masks[:-1]):
     hatch_mask(mask, offset=0.016237 * idx, spacing=0.1)
 
 ad.penup()

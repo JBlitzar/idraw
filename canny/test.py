@@ -6,16 +6,16 @@ from PIL import Image
 
 from pyaxidraw import axidraw
 
-img = cv2.imread("camera.png", cv2.IMREAD_GRAYSCALE)
+img = cv2.imread("portrait.jpg", cv2.IMREAD_GRAYSCALE)
 WIDTH_PX = 200
 img = cv2.resize(img, (WIDTH_PX, int(img.shape[0] * WIDTH_PX / img.shape[1])))
 img = cv2.equalizeHist(img)
 
 edges = cv2.Canny(img, 200, 300)
 
-cv2.imwrite("canny_output.png", edges)
+cv2.imwrite("portrait_output.png", edges)
 
-IMG_WIDTH_IN = 3
+IMG_WIDTH_IN = 5
 pix2in = IMG_WIDTH_IN / edges.shape[1]
 
 
