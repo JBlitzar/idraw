@@ -1,0 +1,1 @@
+# Camera can see from (0,0) to (,6.7)
