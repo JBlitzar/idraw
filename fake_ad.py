@@ -3,8 +3,8 @@ import turtle
 
 class FakeAD:
     SCALE = 100  # 100 pixels -> 1 inch
-    IN2SECS = 0.1  # TODO real data!
-    PEN_UPDOWN_TIME = 0.2  # seconds
+    IN2SECS = 0.1644 # seconds per inch
+    PEN_UPDOWN_TIME = 0.1318  # seconds per action
 
     def __init__(self, screensize=(1100, 1100), speed=0, instant=True):
         self.pen_is_down = False

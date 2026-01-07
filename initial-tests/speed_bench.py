@@ -51,7 +51,7 @@ print("Going ten inches 10x down...")
 
 
 def go_down():
-    ad.goto(0, -10)
+    ad.goto(0, 10)
 
 
 avg_time = time_harness(go_down) / 10
