@@ -3,7 +3,7 @@ import turtle
 
 class FakeAD:
     SCALE = 100  # 100 pixels -> 1 inch
-    IN2SECS = 0.1644 # seconds per inch
+    IN2SECS = 0.1644  # seconds per inch
     PEN_UPDOWN_TIME = 0.1318  # seconds per action
 
     def __init__(self, screensize=(1100, 1100), speed=0, instant=True):
@@ -22,7 +22,7 @@ class FakeAD:
         self.screensize = screensize
         turtle.penup()
         turtle.speed(speed)
-        self.goto(0, 0)
+        self.goto(0, 0, track=False)
         if instant:
             screen.tracer(0, 0)
             turtle.hideturtle()
@@ -31,12 +31,12 @@ class FakeAD:
         self.bbox(8.5, 11)
 
     def bbox(self, w, h):
-        self.goto(0, 0)
+        self.goto(0, 0, track=False)
         self.pendown()
-        self.goto(w, 0)
-        self.goto(w, h)
-        self.goto(0, h)
-        self.goto(0, 0)
+        self.goto(w, 0, track=False)
+        self.goto(w, h, track=False)
+        self.goto(0, h, track=False)
+        self.goto(0, 0, track=False)
         self.penup()
 
     def connect(self):
@@ -54,15 +54,16 @@ class FakeAD:
     def interactive(self):
         pass
 
-    def goto(self, x, y):
+    def goto(self, x, y, track=True):
         old = self.position
         self.position = (x, y)
 
         distance = ((x - old[0]) ** 2 + (y - old[1]) ** 2) ** 0.5
-        if self.pen_is_down:
-            self.pd_travel_dist += distance
-        else:
-            self.pup_travel_dist += distance
+        if track:
+            if self.pen_is_down:
+                self.pd_travel_dist += distance
+            else:
+                self.pup_travel_dist += distance
         # print(self.screensize[1] - y * self.SCALE)
         turtle.goto(x * self.SCALE, self.screensize[1] - y * self.SCALE)
 
