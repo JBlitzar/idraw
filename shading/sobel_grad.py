@@ -4,9 +4,11 @@ from tqdm import trange
 import math
 from PIL import Image
 
-from pyaxidraw import axidraw
+# from pyaxidraw import axidraw
+from fake_ad import FakeAD
 
-img = cv2.imread("banana.jpg", cv2.IMREAD_GRAYSCALE)
+
+img = cv2.imread("canny/portrait.png", cv2.IMREAD_GRAYSCALE)
 WIDTH_PX = 100
 img = cv2.resize(img, (WIDTH_PX, int(img.shape[0] * WIDTH_PX / img.shape[1])))
 img = cv2.equalizeHist(img)
@@ -25,8 +27,8 @@ width_in = 5
 pix2in = width_in / w
 
 
-
-ad = axidraw.AxiDraw()
+# ad = axidraw.AxiDraw()
+ad = FakeAD(speed=0)
 ad.interactive()
 if not ad.connect():
     exit(1)
@@ -37,7 +39,7 @@ for y in trange(h):
         if dithered[y, x] < 128:
             gx = grad_x[y, x]
             gy = grad_y[y, x]
-            angle = math.atan2(gy, gx) + math.pi / 2
+            angle = math.atan2(gy, gx)  # + math.pi / 2
             x0 = x * pix2in
             y0 = y * pix2in
             length = 0.5 * pix2in
@@ -54,5 +56,6 @@ for y in trange(h):
 ad.goto(0, 0)
 ad.disconnect()
 import os
+
 os.system("axi off")
 print("Done!")
