@@ -11,3 +11,5 @@
 `vpype read messy.svg linemerge linesort write clean.svg`
 
 `axicli file.svg`
+
+`axicli clean.svg --progress -s 100`
