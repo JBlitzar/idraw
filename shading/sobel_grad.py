@@ -56,7 +56,7 @@ for y in trange(h):
             ad.goto(x2 + OFFSET[0], y2 + OFFSET[1])
             ad.penup()
 
-
+ad.penup()
 ad.goto(0, 0)
 ad.disconnect()
 import os
