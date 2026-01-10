@@ -4,17 +4,17 @@ from tqdm import trange
 import math
 from PIL import Image
 
-from pyaxidraw import axidraw
-# from fake_ad import FakeAD
+# from pyaxidraw import axidraw
+from fake_ad import FakeAD
 
-img = cv2.imread("canny/portrait.png", cv2.IMREAD_GRAYSCALE)
+img = cv2.imread("canny/photograph.jpeg", cv2.IMREAD_GRAYSCALE)
 WIDTH_PX = 200
 img = cv2.resize(img, (WIDTH_PX, int(img.shape[0] * WIDTH_PX / img.shape[1])))
 # img = cv2.equalizeHist(img)
 
-edges = cv2.Canny(img, 50, 200)
+edges = cv2.Canny(img, 200, 300)
 
-cv2.imwrite("canny/portrait_output.png", edges)
+cv2.imwrite("canny/photograph_output.png", edges)
 
 IMG_WIDTH_IN = 6
 pix2in = IMG_WIDTH_IN / edges.shape[1]
@@ -23,7 +23,8 @@ pix2in = IMG_WIDTH_IN / edges.shape[1]
 h, w = img.shape
 
 
-ad = axidraw.AxiDraw() #FakeAD()  # 
+# ad = axidraw.AxiDraw()
+ad = FakeAD()
 ad.interactive()
 if not ad.connect():
     exit(1)

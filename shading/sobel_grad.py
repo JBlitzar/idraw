@@ -8,8 +8,8 @@ from PIL import Image
 from fake_ad import FakeAD
 
 
-img = cv2.imread("canny/portrait.png", cv2.IMREAD_GRAYSCALE)
-WIDTH_PX = 100
+img = cv2.imread("shading/waves.png", cv2.IMREAD_GRAYSCALE)
+WIDTH_PX = 300
 img = cv2.resize(img, (WIDTH_PX, int(img.shape[0] * WIDTH_PX / img.shape[1])))
 img = cv2.equalizeHist(img)
 
@@ -23,8 +23,10 @@ h, w = img.shape
 grad_x = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=5)
 grad_y = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=5)
 
-width_in = 5
+width_in = 8
+
 pix2in = width_in / w
+height_in = h * pix2in
 
 
 # ad = axidraw.AxiDraw()
@@ -33,6 +35,8 @@ ad.interactive()
 if not ad.connect():
     exit(1)
 ad.penup()
+
+OFFSET = (-width_in / 2 + 5.5, -height_in / 2 + 4.25)
 
 for y in trange(h):
     for x in range(w):
@@ -47,9 +51,9 @@ for y in trange(h):
             y1 = y0 + length * math.sin(angle + math.pi / 2)
             x2 = x0 - length * math.cos(angle + math.pi / 2)
             y2 = y0 - length * math.sin(angle + math.pi / 2)
-            ad.goto(x1, y1)
+            ad.goto(x1 + OFFSET[0], y1 + OFFSET[1])
             ad.pendown()
-            ad.goto(x2, y2)
+            ad.goto(x2 + OFFSET[0], y2 + OFFSET[1])
             ad.penup()
 
 
