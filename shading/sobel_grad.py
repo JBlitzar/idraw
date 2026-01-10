@@ -4,8 +4,8 @@ from tqdm import trange
 import math
 from PIL import Image
 
-# from pyaxidraw import axidraw
-from fake_ad import FakeAD
+from pyaxidraw import axidraw
+# from fake_ad import FakeAD
 
 
 img = cv2.imread("shading/waves.png", cv2.IMREAD_GRAYSCALE)
@@ -29,8 +29,8 @@ pix2in = width_in / w
 height_in = h * pix2in
 
 
-# ad = axidraw.AxiDraw()
-ad = FakeAD(speed=0)
+ad = axidraw.AxiDraw()
+# ad = FakeAD(speed=0)
 ad.interactive()
 if not ad.connect():
     exit(1)
