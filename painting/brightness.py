@@ -4,8 +4,8 @@ from tqdm import trange
 import math
 from PIL import Image
 
-# from pyaxidraw import axidraw
-from fake_ad import FakeAD
+from pyaxidraw import axidraw
+# from fake_ad import FakeAD
 
 INK_POS = (12, 2)
 
@@ -26,7 +26,7 @@ for i in range(bin_num - 1):
     mask = cv2.inRange(img, lower, upper - 1)
     brightness_bin_masks.append(mask)
 cv2.imwrite("painting/brightness_bins.png", np.hstack(brightness_bin_masks))
-OFFSET = (3, 1)
+OFFSET = (6, 3)
 BRUSH_WIDTH_IN = 0.2
 
 
@@ -40,15 +40,17 @@ height_in = h * pix2in
 BRUSH_WIDTH_PX = int(BRUSH_WIDTH_IN / pix2in)
 
 
-def followAllPoints(edges):
+def followAllPoints():
+    global edges
     h, w = edges.shape
     for y in range(h):
         for x in range(w):
             if edges[y, x] != 0:
-                followPoints(x, y, edges)
+                followPoints(x, y)
 
 
-def followPoints(x, y, edges):
+def followPoints(x, y):
+    global edges
     points = []
     h, w = edges.shape
     stack = [(x, y)]
@@ -75,21 +77,32 @@ def followPoints(x, y, edges):
                 break
     dip()
     ad.goto(points[0][0] * pix2in + OFFSET[0], points[0][1] * pix2in + OFFSET[1])
-
+   
+    i = 0
     ad.pendown()
     cur = points[0]
     for p in points:
         if (p[0] - cur[0]) ** 2 + (p[1] - cur[1]) ** 2 > 2**2:
             cur = p
             ad.goto(p[0] * pix2in + OFFSET[0], p[1] * pix2in + OFFSET[1])
+
+            i += 1
+            if i % 40 == 0:
+                ad.penup()
+                dip()
+                ad.goto(p[0] * pix2in + OFFSET[0], p[1] * pix2in + OFFSET[1])
+                ad.pendown()
+                cumlength = 0
         # print(p)
     ad.penup()
 
     print(".")
 
 
-# ad = axidraw.AxiDraw()
-ad = FakeAD(speed=0)
+ad = axidraw.AxiDraw()
+
+ad.interactive()
+
 connected = ad.connect()
 ad.options.model = 2
 ad.options.clip_to_page = False
@@ -104,11 +117,6 @@ def dip():
     ad.penup()
 
 
-ad.options.speed_pendown = 100
-ad.options.speed_penup = 100
-
-ad.update()
-
 testmask = brightness_bin_masks[-1]
 component_masks = []
 num_labels, labels_im = cv2.connectedComponents(testmask)
@@ -117,12 +125,11 @@ for label in range(1, num_labels):
     component_masks.append(component_mask)
 for i, comp_mask in enumerate(component_masks):
     cv2.imwrite(f"painting/component_{i}.png", comp_mask)
-    edgePoints = cv2.findContours(comp_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[
-        0
-    ]
-    edge_img = np.zeros_like(img)
-    cv2.drawContours(edge_img, edgePoints, -1, 255, 1)
-    followAllPoints(edge_img)
+    edge_img = comp_mask - cv2.erode(comp_mask, np.ones((3,3), np.uint8), iterations=1)
+
+    global edges
+    edges = edge_img.copy()
+    followAllPoints()
     for x in np.arange(0, w, BRUSH_WIDTH_PX):
         runs = []
         in_run = False
@@ -148,7 +155,6 @@ for i, comp_mask in enumerate(component_masks):
             ad.goto(x * pix2in + OFFSET[0], end_y * pix2in + OFFSET[1])
             ad.penup()
 
-
 ad.penup()
 ad.goto(0, 0)
 ad.disconnect()
@@ -156,3 +162,4 @@ import os
 
 os.system("axi off")
 print("Done!")
+os.system('curl -d "done!!" ntfy.sh/jb_pp_109188f37776d45aee070634901e480c')
