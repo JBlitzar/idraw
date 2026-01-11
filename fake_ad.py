@@ -1,6 +1,10 @@
 import turtle
 
 
+class FakeOptions:
+    pass
+
+
 class FakeAD:
     SCALE = 100  # 100 pixels -> 1 inch
     IN2SECS = 0.1644  # seconds per inch
@@ -14,6 +18,8 @@ class FakeAD:
         self.pd_travel_dist = 0
 
         self.updowns = 0
+
+        self.options = FakeOptions()  # dummy options object
 
         screen = turtle.Screen()
         screen.screensize(*screensize)
@@ -40,6 +46,9 @@ class FakeAD:
         self.penup()
 
     def connect(self):
+        return True
+
+    def update(self):
         return True
 
     def disconnect(self):
