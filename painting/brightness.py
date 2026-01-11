@@ -26,7 +26,7 @@ for i in range(bin_num - 1):
     mask = cv2.inRange(img, lower, upper - 1)
     brightness_bin_masks.append(mask)
 cv2.imwrite("painting/brightness_bins.png", np.hstack(brightness_bin_masks))
-OFFSET = (6, 3)
+OFFSET = (3, 3)
 BRUSH_WIDTH_IN = 0.2
 
 
@@ -92,7 +92,6 @@ def followPoints(x, y):
                 dip()
                 ad.goto(p[0] * pix2in + OFFSET[0], p[1] * pix2in + OFFSET[1])
                 ad.pendown()
-                cumlength = 0
         # print(p)
     ad.penup()
 
@@ -130,30 +129,30 @@ for i, comp_mask in enumerate(component_masks):
     global edges
     edges = edge_img.copy()
     followAllPoints()
-    for x in np.arange(0, w, BRUSH_WIDTH_PX):
-        runs = []
-        in_run = False
-        start_y = None
+for x in np.arange(0, w, BRUSH_WIDTH_PX):
+    runs = []
+    in_run = False
+    start_y = None
 
-        for y in range(h):
-            if mask[y, int(x)] == 255:
-                if not in_run:
-                    start_y = y
-                    in_run = True
-            else:
-                if in_run:
-                    runs.append((start_y, y - 1))
-                    in_run = False
+    for y in range(h):
+        if testmask[y, int(x)] == 255:
+            if not in_run:
+                start_y = y
+                in_run = True
+        else:
+            if in_run:
+                runs.append((start_y, y - 1))
+                in_run = False
 
-        if in_run:
-            runs.append((start_y, h - 1))
+    if in_run:
+        runs.append((start_y, h - 1))
 
-        for start_y, end_y in runs:
-            dip()
-            ad.goto(x * pix2in + OFFSET[0], start_y * pix2in + OFFSET[1])
-            ad.pendown()
-            ad.goto(x * pix2in + OFFSET[0], end_y * pix2in + OFFSET[1])
-            ad.penup()
+    for start_y, end_y in runs:
+        dip()
+        ad.goto(x * pix2in + OFFSET[0], start_y * pix2in + OFFSET[1])
+        ad.pendown()
+        ad.goto(x * pix2in + OFFSET[0], end_y * pix2in + OFFSET[1])
+        ad.penup()
 
 ad.penup()
 ad.goto(0, 0)
