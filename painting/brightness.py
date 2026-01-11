@@ -4,8 +4,10 @@ from tqdm import trange
 import math
 from PIL import Image
 
-from pyaxidraw import axidraw
-# from fake_ad import FakeAD
+# from pyaxidraw import axidraw
+from fake_ad import FakeAD
+
+INK_POS = (12, 2)
 
 
 img = cv2.imread("painting/dali.png", cv2.IMREAD_GRAYSCALE)
@@ -24,13 +26,18 @@ for i in range(bin_num - 1):
     mask = cv2.inRange(img, lower, upper - 1)
     brightness_bin_masks.append(mask)
 cv2.imwrite("painting/brightness_bins.png", np.hstack(brightness_bin_masks))
-OFFSET = (0, 0)
+OFFSET = (3, 1)
+BRUSH_WIDTH_IN = 0.2
+
+
 h, w = img.shape
 
-width_in = 8
+width_in = 5
 
 pix2in = width_in / w
 height_in = h * pix2in
+
+BRUSH_WIDTH_PX = int(BRUSH_WIDTH_IN / pix2in)
 
 
 def followAllPoints(edges):
@@ -66,8 +73,9 @@ def followPoints(x, y, edges):
             if 0 <= nx < w and 0 <= ny < h and edges[ny, nx] != 0:
                 stack.append((nx, ny))
                 break
-
+    dip()
     ad.goto(points[0][0] * pix2in + OFFSET[0], points[0][1] * pix2in + OFFSET[1])
+
     ad.pendown()
     cur = points[0]
     for p in points:
@@ -76,15 +84,25 @@ def followPoints(x, y, edges):
             ad.goto(p[0] * pix2in + OFFSET[0], p[1] * pix2in + OFFSET[1])
         # print(p)
     ad.penup()
+
     print(".")
 
 
 # ad = axidraw.AxiDraw()
 ad = FakeAD(speed=0)
-ad.interactive()
-if not ad.connect():
-    exit(1)
-ad.penup()
+connected = ad.connect()
+ad.options.model = 2
+ad.options.clip_to_page = False
+ad.options.pen_pos_up = 100
+ad.options.pen_pos_down = 0
+ad.update()
+
+
+def dip():
+    ad.goto(INK_POS[0], INK_POS[1])
+    ad.pendown()
+    ad.penup()
+
 
 ad.options.speed_pendown = 100
 ad.options.speed_penup = 100
@@ -99,12 +117,36 @@ for label in range(1, num_labels):
     component_masks.append(component_mask)
 for i, comp_mask in enumerate(component_masks):
     cv2.imwrite(f"painting/component_{i}.png", comp_mask)
-    edgePoints = cv2.findContours(
-        comp_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )[0]
+    edgePoints = cv2.findContours(comp_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[
+        0
+    ]
     edge_img = np.zeros_like(img)
     cv2.drawContours(edge_img, edgePoints, -1, 255, 1)
     followAllPoints(edge_img)
+    for x in np.arange(0, w, BRUSH_WIDTH_PX):
+        runs = []
+        in_run = False
+        start_y = None
+
+        for y in range(h):
+            if mask[y, int(x)] == 255:
+                if not in_run:
+                    start_y = y
+                    in_run = True
+            else:
+                if in_run:
+                    runs.append((start_y, y - 1))
+                    in_run = False
+
+        if in_run:
+            runs.append((start_y, h - 1))
+
+        for start_y, end_y in runs:
+            dip()
+            ad.goto(x * pix2in + OFFSET[0], start_y * pix2in + OFFSET[1])
+            ad.pendown()
+            ad.goto(x * pix2in + OFFSET[0], end_y * pix2in + OFFSET[1])
+            ad.penup()
 
 
 ad.penup()
