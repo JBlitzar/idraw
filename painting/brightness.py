@@ -4,8 +4,8 @@ from tqdm import trange
 import math
 from PIL import Image
 
-from pyaxidraw import axidraw
-# from fake_ad import FakeAD
+# from pyaxidraw import axidraw
+from fake_ad import FakeAD
 
 INK_POS = (12, 2)
 
@@ -26,7 +26,7 @@ for i in range(bin_num - 1):
     mask = cv2.inRange(img, lower, upper - 1)
     brightness_bin_masks.append(mask)
 cv2.imwrite("painting/brightness_bins.png", np.hstack(brightness_bin_masks))
-OFFSET = (3, 3)
+OFFSET = (3, 1)
 BRUSH_WIDTH_IN = 0.2
 
 
@@ -77,7 +77,7 @@ def followPoints(x, y):
                 break
     dip()
     ad.goto(points[0][0] * pix2in + OFFSET[0], points[0][1] * pix2in + OFFSET[1])
-   
+
     i = 0
     ad.pendown()
     cur = points[0]
@@ -98,8 +98,8 @@ def followPoints(x, y):
     print(".")
 
 
-ad = axidraw.AxiDraw()
-
+# ad = axidraw.AxiDraw()
+ad = FakeAD()
 ad.interactive()
 
 connected = ad.connect()
@@ -124,7 +124,8 @@ for label in range(1, num_labels):
     component_masks.append(component_mask)
 for i, comp_mask in enumerate(component_masks):
     cv2.imwrite(f"painting/component_{i}.png", comp_mask)
-    edge_img = comp_mask - cv2.erode(comp_mask, np.ones((3,3), np.uint8), iterations=1)
+    edge_img = comp_mask - cv2.erode(comp_mask, np.ones((3, 3), np.uint8), iterations=1)
+    cv2.imwrite(f"painting/component_{i}_edges.png", edge_img)
 
     global edges
     edges = edge_img.copy()
