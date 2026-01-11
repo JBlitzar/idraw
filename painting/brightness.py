@@ -4,8 +4,8 @@ from tqdm import trange
 import math
 from PIL import Image
 
-# from pyaxidraw import axidraw
-from fake_ad import FakeAD
+from pyaxidraw import axidraw
+# from fake_ad import FakeAD
 
 
 img = cv2.imread("painting/dali.png", cv2.IMREAD_GRAYSCALE)
