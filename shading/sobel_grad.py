@@ -75,3 +75,4 @@ import os
 
 os.system("axi off")
 print("Done!")
+os.system('curl -d "done!!" ntfy.sh/jb_pp_109188f37776d45aee070634901e480c')
