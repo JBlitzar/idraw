@@ -1,3 +1,4 @@
+import math
 import turtle
 
 
@@ -7,15 +8,17 @@ class FakeOptions:
 
 class FakeAD:
     SCALE = 100  # 100 pixels -> 1 inch
-    IN2SECS = 0.1644  # seconds per inch
+
     PEN_UPDOWN_TIME = 0.1318  # seconds per action
 
     def __init__(self, screensize=(1100, 1100), speed=0, instant=True):
         self.pen_is_down = False
         self.position = (0, 0)
 
-        self.pup_travel_dist = 0
-        self.pd_travel_dist = 0
+        self.pup_travel_time = 0
+        self.pd_travel_time = 0
+
+
 
         self.updowns = 0
 
@@ -54,11 +57,25 @@ class FakeAD:
     def disconnect(self):
         self.screen.update()
         turtle.done()
-        total_dst = self.pup_travel_dist + self.pd_travel_dist
-        time_est = total_dst * self.IN2SECS + self.updowns * self.PEN_UPDOWN_TIME
+        total_time = self.pup_travel_time + self.pd_travel_time
+        time_est = total_time + self.updowns * self.PEN_UPDOWN_TIME
         print(
-            f"Done! \n  Pen up travel: {self.pup_travel_dist:.2f} in, Pen down travel: {self.pd_travel_dist:.2f} in. \n  Total: {total_dst:.2f} in\n  Estimated time: {time_est} s"
+            f"Done! \n  Pen up travel: {self.pup_travel_time:.2f} s, Pen down travel: {self.pd_travel_time:.2f} s. \n  Pen up/downs: {self.updowns} \n  Estimated time: {time_est} s"
         )
+
+    def _dst2time(self, distance):
+        # see https://www.desmos.com/calculator/ntddi7okrk
+        # The cutoffs at the magic numbers 0.25 and 1 are in fact baked in to the firmware
+        # Other parameters are obtained empricially through regression
+        if distance < 0.25:
+            # there is a physics-based justification for using a square root curve here
+            return 2 * math.sqrt(distance / 11.2686403048)
+        elif distance < 1:
+            # linear fit for mid distances, seems to work
+            return 0.193114285714 * distance + 0.0836923809524
+        else:
+            # there is a physics-based justification for using a linear fit (+ a constant) here
+            return 0.132666839038 * distance + 0.134487621013
 
     def interactive(self):
         pass
@@ -70,9 +87,9 @@ class FakeAD:
         distance = ((x - old[0]) ** 2 + (y - old[1]) ** 2) ** 0.5
         if track:
             if self.pen_is_down:
-                self.pd_travel_dist += distance
+                self.pd_travel_time += self._dst2time(distance)
             else:
-                self.pup_travel_dist += distance
+                self.pup_travel_time += self._dst2time(distance)
         # print(self.screensize[1] - y * self.SCALE)
         turtle.goto(x * self.SCALE, self.screensize[1] - y * self.SCALE)
 
