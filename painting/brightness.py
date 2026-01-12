@@ -4,8 +4,8 @@ from tqdm import trange
 import math
 from PIL import Image
 
-# from pyaxidraw import axidraw
-from fake_ad import FakeAD
+from pyaxidraw import axidraw
+# from fake_ad import FakeAD
 
 INK_POS = (12, 2)
 
@@ -27,7 +27,7 @@ for i in range(bin_num - 1):
     brightness_bin_masks.append(mask)
 cv2.imwrite("painting/brightness_bins.png", np.hstack(brightness_bin_masks))
 OFFSET = (3, 1)
-BRUSH_WIDTH_IN = 0.2
+BRUSH_WIDTH_IN = 0.1
 
 
 h, w = img.shape
@@ -98,8 +98,8 @@ def followPoints(x, y):
     print(".")
 
 
-# ad = axidraw.AxiDraw()
-ad = FakeAD()
+ad = axidraw.AxiDraw()
+# ad = FakeAD()
 ad.interactive()
 
 connected = ad.connect()
@@ -122,14 +122,7 @@ num_labels, labels_im = cv2.connectedComponents(testmask)
 for label in range(1, num_labels):
     component_mask = np.uint8(labels_im == label) * 255
     component_masks.append(component_mask)
-for i, comp_mask in enumerate(component_masks):
-    cv2.imwrite(f"painting/component_{i}.png", comp_mask)
-    edge_img = comp_mask - cv2.erode(comp_mask, np.ones((3, 3), np.uint8), iterations=1)
-    cv2.imwrite(f"painting/component_{i}_edges.png", edge_img)
 
-    global edges
-    edges = edge_img.copy()
-    followAllPoints()
 for x in np.arange(0, w, BRUSH_WIDTH_PX):
     runs = []
     in_run = False
@@ -149,12 +142,23 @@ for x in np.arange(0, w, BRUSH_WIDTH_PX):
         runs.append((start_y, h - 1))
 
     for start_y, end_y in runs:
+        end_y -= int(0.1 / pix2in)
+        start_y += int(0.1 / pix2in)
+        if end_y - start_y < 0.1 / pix2in:
+            continue
         dip()
         ad.goto(x * pix2in + OFFSET[0], start_y * pix2in + OFFSET[1])
         ad.pendown()
         ad.goto(x * pix2in + OFFSET[0], end_y * pix2in + OFFSET[1])
         ad.penup()
+for i, comp_mask in enumerate(component_masks):
+    cv2.imwrite(f"painting/component_{i}.png", comp_mask)
+    edge_img = comp_mask - cv2.erode(comp_mask, np.ones((3, 3), np.uint8), iterations=1)
+    cv2.imwrite(f"painting/component_{i}_edges.png", edge_img)
 
+    global edges
+    edges = edge_img.copy()
+    followAllPoints()
 ad.penup()
 ad.goto(0, 0)
 ad.disconnect()
