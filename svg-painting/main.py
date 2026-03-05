@@ -1,16 +1,16 @@
 from svgpathtools import svg2paths
 import numpy as np
 
-# from pyaxidraw import axidraw
+from pyaxidraw import axidraw
 import math
 import time
-from fake_ad import FakeAD
+#from fake_ad import FakeAD
 import os
 
 INK_POS = (12, 2)
 
 
-ad = FakeAD(speed=5, instant=False)  # axidraw.AxiDraw()
+ad = axidraw.AxiDraw() # FakeAD(speed=5, instant=False)
 
 ad.interactive()
 
@@ -66,14 +66,14 @@ ad.penup()
 
 ad.options.clip_to_page = False
 
-
+OFFSET = (2.25,2.5)
 for i, path in enumerate(paths):
     print(path)
     dip()
-    ad.goto(path[0][0], path[0][1])
+    ad.goto(path[0][0] + OFFSET[0], path[0][1] + OFFSET[1])
     ad.pendown()
     for x, y in path:
-        ad.goto(x, y)
+        ad.goto(x + OFFSET[0], y + OFFSET[1])
     ad.penup()
 
     # print(f"Path {i}: {len(path)} points")
@@ -87,4 +87,4 @@ ad.disconnect()
 
 os.system("axi off")
 print("Done!")
-# os.system('curl -d "done!!" ntfy.sh/jb_pp_109188f37776d45aee070634901e480c')
+os.system('curl -d "done!!" ntfy.sh/jb_pp_109188f37776d45aee070634901e480c')
