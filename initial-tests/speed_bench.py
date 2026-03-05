@@ -1,5 +1,7 @@
-from pyaxidraw import axidraw
 import time
+from pyaxidraw import axidraw
+import numpy as np
+
 
 ad = axidraw.AxiDraw()
 ad.interactive()
@@ -9,7 +11,10 @@ if not connected:
     print("Could not connect to plotter!")
     exit(1)
 
-ad.penup()
+ad.options.speed_pendown = 100
+ad.options.speed_penup = 100
+
+ad.update()
 
 
 def time_harness(fn, n=10):
@@ -25,37 +30,37 @@ def time_harness(fn, n=10):
     avg_time = sum(times) / n
     return avg_time
 
-
-print("Going ten inches 10x to the right...")
-
-
-def go_right():
-    ad.goto(10, 0)
+for i in np.arange(0.2,0.3,0.01):
+    print(f"Going {i} inches 10x to the right...")
 
 
-avg_time = time_harness(go_right) / 10
-print(f"Average time/inch: {avg_time:.4f} s")
+    def go_right():
+        ad.goto(i, 0)
 
 
-print("Going ten inches diagonally 10x...")
+    avg_time = time_harness(go_right)
+    print(f"Average time: {avg_time:.4f} s")
 
 
-def go_diag():
-    ad.goto(10, 10)
+# print("Going ten inches diagonally 10x...")
 
 
-avg_time = time_harness(go_diag) / (10 * (2**0.5))
-print(f"Average time/inch: {avg_time:.4f} s")
-
-print("Going ten inches 10x down...")
+# def go_diag():
+#     ad.goto(10, 10)
 
 
-def go_down():
-    ad.goto(0, 10)
+# avg_time = time_harness(go_diag) / (10 * (2**0.5))
+# print(f"Average time/inch: {avg_time:.4f} s")
+
+# print("Going ten inches 10x down...")
 
 
-avg_time = time_harness(go_down) / 10
-print(f"Average time/inch: {avg_time:.4f} s")
+# def go_down():
+#     ad.goto(0, 10)
+
+
+# avg_time = time_harness(go_down) / 10
+# print(f"Average time/inch: {avg_time:.4f} s")
 
 print("Pen down/up 10x")
 

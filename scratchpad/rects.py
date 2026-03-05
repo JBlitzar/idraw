@@ -23,7 +23,7 @@ if not connected:
 
 ad.penup()
 
-rect(1, 2, 3, 4)
+rect(1.5, 8.5-2, 4.5, -4.5)
 
 
 ad.penup()
