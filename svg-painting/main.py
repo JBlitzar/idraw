@@ -4,13 +4,15 @@ import numpy as np
 from pyaxidraw import axidraw
 import math
 import time
-#from fake_ad import FakeAD
+
+# from fake_ad import FakeAD
 import os
+import threading
 
 INK_POS = (12, 2)
 
 
-ad = axidraw.AxiDraw() # FakeAD(speed=5, instant=False)
+ad = axidraw.AxiDraw()  # FakeAD(speed=5, instant=True)
 
 ad.interactive()
 
@@ -29,6 +31,31 @@ def dip():
 
 
 SVG_DPI = 96.0  # SVG spec default
+
+
+TIMELAPSE = True
+
+
+def start_timelapse(interval_ms=2000):
+    if not TIMELAPSE:
+        return
+    out_dir = os.path.join(
+        os.path.dirname(__file__), "timelapse", time.strftime("%Y%m%d_%H%M%S")
+    )
+    os.makedirs(out_dir, exist_ok=True)
+    out = os.path.join(out_dir, "frame%06d.jpg")
+    cmd = f'(rpicam-still -n --timeout 0 --timelapse {interval_ms} -o "{out}" || libcamera-still -n --timeout 0 --timelapse {interval_ms} -o "{out}")'
+    threading.Thread(target=lambda: os.system(cmd), daemon=True).start()
+
+
+def stop_timelapse():
+    if not TIMELAPSE:
+        return
+    os.system("pkill -INT rpicam-still")
+    os.system("pkill -INT libcamera-still")
+    os.system(
+        "ffmpeg -y -framerate 30 -pattern_type glob -i 'timelapse/*/*.jpg' -c:v libx264 -pix_fmt yuv420p timelapse.mp4"
+    )
 
 
 # ai function btw
@@ -54,7 +81,7 @@ def svg_to_rasterized_paths(svg_file, points_per_inch=10):
     return rasterized
 
 
-paths = svg_to_rasterized_paths("kafka.svg", points_per_inch=35)
+paths = svg_to_rasterized_paths("wb.svg", points_per_inch=35)
 
 
 if not connected:
@@ -63,10 +90,12 @@ if not connected:
 
 ad.penup()
 
+start_timelapse()
+
 
 ad.options.clip_to_page = False
 
-OFFSET = (2.25,2.5)
+OFFSET = (1.15, 0)  # (2.25,2.5)
 for i, path in enumerate(paths):
     print(path)
     dip()
@@ -83,6 +112,8 @@ for i, path in enumerate(paths):
 ad.penup()
 ad.goto(0, 0)
 ad.disconnect()
+
+stop_timelapse()
 
 
 os.system("axi off")
