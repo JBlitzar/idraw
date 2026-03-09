@@ -1,7 +1,14 @@
 from svgpathtools import svg2paths
 import numpy as np
 
-from pyaxidraw import axidraw
+IS_FAKE = False
+try:
+    from pyaxidraw import axidraw
+except ImportError:
+    from fake_ad import FakeAD
+
+    IS_FAKE = True
+
 import math
 import time
 
@@ -11,8 +18,11 @@ import threading
 
 INK_POS = (12, 2)
 
-
-ad = axidraw.AxiDraw()  # FakeAD(speed=5, instant=True)
+ad = None
+if IS_FAKE:
+    ad = FakeAD(speed=5, instant=True)
+else:
+    ad = axidraw.AxiDraw()  # FakeAD(speed=5, instant=True)
 
 ad.interactive()
 
@@ -37,13 +47,14 @@ SVG_DPI = 96.0  # SVG spec default
 
 TIMELAPSE = True
 out_dir = os.path.join(
-        os.path.dirname(__file__), "timelapse", time.strftime("%Y%m%d_%H%M%S")
-    )
+    os.path.dirname(__file__), "timelapse", time.strftime("%Y%m%d_%H%M%S")
+)
+
 
 def start_timelapse(interval_ms=1000):
     if not TIMELAPSE:
         return
-    
+
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, "frame%06d.jpg")
     cmd = f'(rpicam-still -n --timeout 0 --timelapse {interval_ms} -o "{out}" || libcamera-still -n --timeout 0 --timelapse {interval_ms} -o "{out}")'
@@ -57,7 +68,6 @@ def stop_timelapse():
     os.system("pkill -INT libcamera-still")
     os.system(
         f"ffmpeg -y -framerate 30 -pattern_type glob -i '{out_dir}/*.jpg' -c:v libx264 -pix_fmt yuv420p timelapse.mp4"
-    
     )
 
 
@@ -98,14 +108,15 @@ start_timelapse()
 
 ad.options.clip_to_page = False
 
-OFFSET = (1.15, 0)  # (2.25,2.5)
+OFFSET = (0.6, 0)  # (2.25,2.5)
+SCALE = 1.2
 for i, path in enumerate(paths[::-1]):
     print(path)
     dip()
-    ad.goto(path[0][0] + OFFSET[0], path[0][1] + OFFSET[1])
+    ad.goto(path[0][0] * SCALE + OFFSET[0], path[0][1] * SCALE + OFFSET[1])
     ad.pendown()
     for x, y in path:
-        ad.goto(x + OFFSET[0], y + OFFSET[1])
+        ad.goto(x * SCALE + OFFSET[0], y * SCALE + OFFSET[1])
     ad.penup()
 
     # print(f"Path {i}: {len(path)} points")
