@@ -21,6 +21,8 @@ ad.options.model = 2
 ad.options.clip_to_page = False
 ad.options.pen_pos_up = 100
 ad.options.pen_pos_down = 0
+ad.options.speed_pendown = 100
+ad.options.speed_penup = 100
 ad.update()
 
 
@@ -34,14 +36,14 @@ SVG_DPI = 96.0  # SVG spec default
 
 
 TIMELAPSE = True
-
-
-def start_timelapse(interval_ms=2000):
-    if not TIMELAPSE:
-        return
-    out_dir = os.path.join(
+out_dir = os.path.join(
         os.path.dirname(__file__), "timelapse", time.strftime("%Y%m%d_%H%M%S")
     )
+
+def start_timelapse(interval_ms=1000):
+    if not TIMELAPSE:
+        return
+    
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, "frame%06d.jpg")
     cmd = f'(rpicam-still -n --timeout 0 --timelapse {interval_ms} -o "{out}" || libcamera-still -n --timeout 0 --timelapse {interval_ms} -o "{out}")'
@@ -54,7 +56,8 @@ def stop_timelapse():
     os.system("pkill -INT rpicam-still")
     os.system("pkill -INT libcamera-still")
     os.system(
-        "ffmpeg -y -framerate 30 -pattern_type glob -i 'timelapse/*/*.jpg' -c:v libx264 -pix_fmt yuv420p timelapse.mp4"
+        f"ffmpeg -y -framerate 30 -pattern_type glob -i '{out_dir}/*.jpg' -c:v libx264 -pix_fmt yuv420p timelapse.mp4"
+    
     )
 
 
@@ -96,7 +99,7 @@ start_timelapse()
 ad.options.clip_to_page = False
 
 OFFSET = (1.15, 0)  # (2.25,2.5)
-for i, path in enumerate(paths):
+for i, path in enumerate(paths[::-1]):
     print(path)
     dip()
     ad.goto(path[0][0] + OFFSET[0], path[0][1] + OFFSET[1])
