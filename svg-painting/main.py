@@ -46,9 +46,12 @@ SVG_DPI = 96.0  # SVG spec default
 
 
 TIMELAPSE = True
+TIMELAPSE_LENS_POSITION = 0.95
+timestamp = time.strftime("%Y%m%d_%H%M%S")
 out_dir = os.path.join(
-    os.path.dirname(__file__), "timelapse", time.strftime("%Y%m%d_%H%M%S")
+    os.path.dirname(__file__), "timelapse", timestamp
 )
+final_dir = os.path.join(os.path.dirname(__file__), "lapses")
 
 
 def start_timelapse(interval_ms=1000):
@@ -57,7 +60,8 @@ def start_timelapse(interval_ms=1000):
 
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, "frame%06d.jpg")
-    cmd = f'(rpicam-still -n --timeout 0 --timelapse {interval_ms} -o "{out}" || libcamera-still -n --timeout 0 --timelapse {interval_ms} -o "{out}")'
+
+    cmd = f'rpicam-still -n --timeout 0 --timelapse {interval_ms} --autofocus-mode manual --lens-position 0.95 -o "{out}"'
     threading.Thread(target=lambda: os.system(cmd), daemon=True).start()
 
 
@@ -65,10 +69,11 @@ def stop_timelapse():
     if not TIMELAPSE:
         return
     os.system("pkill -INT rpicam-still")
-    os.system("pkill -INT libcamera-still")
     os.system(
-        f"ffmpeg -y -framerate 30 -pattern_type glob -i '{out_dir}/*.jpg' -c:v libx264 -pix_fmt yuv420p timelapse.mp4"
+        f"ffmpeg -y -framerate 30 -pattern_type glob -i '{out_dir}/*.jpg' -c:v h264_v4l2m2m -pix_fmt yuv420p timelapse.mp4"
     )
+    os.system(f"mv timelapse.mp4 {final_dir}/timelapse_{timestamp}.mp4")
+    print(f"\n\ndone! To remove image: \nrm -r {out_dir}/\n\n")
 
 
 # ai function btw
@@ -110,7 +115,7 @@ ad.options.clip_to_page = False
 
 OFFSET = (0.6, 0)  # (2.25,2.5)
 SCALE = 1.2
-for i, path in enumerate(paths[::-1]):
+for i, path in enumerate(paths):
     print(path)
     dip()
     ad.goto(path[0][0] * SCALE + OFFSET[0], path[0][1] * SCALE + OFFSET[1])

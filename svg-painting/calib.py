@@ -40,8 +40,17 @@ ad.options.clip_to_page = False
 
 ad.penup()
 ad.goto(INK_POS[0], INK_POS[1])
+input("Enter to dip and go: ")
 time.sleep(1)
 ad.pendown()
+ad.penup()
+ad.goto(12, 6)
+input("Enter to paint: ")
+
+ad.pendown()
+ad.goto(12, 7)
+ad.penup()
+input("Enter to go home: ")
 
 ad.penup()
 ad.goto(0,0)
