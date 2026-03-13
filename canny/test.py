@@ -28,6 +28,11 @@ ad = FakeAD()
 ad.interactive()
 if not ad.connect():
     exit(1)
+ad.options.speed_pendown = 110
+ad.options.speed_penup = 110
+ad.options.pen_rate_lower = 100
+ad.options.pen_rate_raise = 100
+ad.options.const_speed = True
 ad.penup()
 
 OFFSET = (-IMG_WIDTH_IN / 2 + 2.25 + 5.5 + 0.5, -h * pix2in / 2 + 4.25)
@@ -62,14 +67,14 @@ def followCanny(x, y):
                 stack.append((nx, ny))
                 break
 
-    ad.goto(points[0][0] * pix2in + OFFSET[0], points[0][1] * pix2in + OFFSET[1])
+    pts = np.array(points, dtype=np.float32).reshape(-1, 1, 2)
+    simplified = cv2.approxPolyDP(pts, epsilon=1.5, closed=False)
+    simplified = simplified.reshape(-1, 2)
+
+    ad.goto(simplified[0][0] * pix2in + OFFSET[0], simplified[0][1] * pix2in + OFFSET[1])
     ad.pendown()
-    cur = points[0]
-    for p in points:
-        if (p[0] - cur[0]) ** 2 + (p[1] - cur[1]) ** 2 > 1**2:
-            cur = p
-            ad.goto(p[0] * pix2in + OFFSET[0], p[1] * pix2in + OFFSET[1])
-        # print(p)
+    for p in simplified[1:]:
+        ad.goto(p[0] * pix2in + OFFSET[0], p[1] * pix2in + OFFSET[1])
     ad.penup()
     print(".")
 
