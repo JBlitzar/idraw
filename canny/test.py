@@ -4,8 +4,8 @@ from tqdm import trange
 import math
 from PIL import Image
 
-# from pyaxidraw import axidraw
-from fake_ad import FakeAD
+from pyaxidraw import axidraw
+# from fake_ad import FakeAD
 
 img = cv2.imread("canny/portrait.png", cv2.IMREAD_GRAYSCALE)
 WIDTH_PX = 500
@@ -13,6 +13,12 @@ img = cv2.resize(img, (WIDTH_PX, int(img.shape[0] * WIDTH_PX / img.shape[1])))
 # img = cv2.equalizeHist(img)
 
 edges = cv2.Canny(img, 100, 200)
+
+BORDER = 5
+edges[:BORDER, :] = 0
+edges[-BORDER:, :] = 0
+edges[:, :BORDER] = 0
+edges[:, -BORDER:] = 0
 
 cv2.imwrite("canny/portrait_output.png", edges)
 
@@ -23,8 +29,8 @@ pix2in = IMG_WIDTH_IN / edges.shape[1]
 h, w = img.shape
 
 
-# ad = axidraw.AxiDraw()
-ad = FakeAD()
+ad = axidraw.AxiDraw()
+# ad = FakeAD()
 ad.interactive()
 if not ad.connect():
     exit(1)
@@ -71,7 +77,9 @@ def followCanny(x, y):
     simplified = cv2.approxPolyDP(pts, epsilon=1.5, closed=False)
     simplified = simplified.reshape(-1, 2)
 
-    ad.goto(simplified[0][0] * pix2in + OFFSET[0], simplified[0][1] * pix2in + OFFSET[1])
+    ad.goto(
+        simplified[0][0] * pix2in + OFFSET[0], simplified[0][1] * pix2in + OFFSET[1]
+    )
     ad.pendown()
     for p in simplified[1:]:
         ad.goto(p[0] * pix2in + OFFSET[0], p[1] * pix2in + OFFSET[1])
