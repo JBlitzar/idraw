@@ -4,7 +4,7 @@ from tqdm import trange
 import math
 from PIL import Image
 import random
-random.seed(2)
+random.seed(4)
 
 CELL_SIZE_IN = 0.7
 GRID_W = 10
@@ -177,8 +177,8 @@ def main():
     ad.interactive()
     if not ad.connect():
         return 1
-    ad.options.speed_pendown = 100
-    ad.options.speed_penup = 100
+    ad.options.speed_pendown = 80
+    ad.options.speed_penup = 80
     ad.options.pen_rate_lower = 100
     ad.options.pen_rate_raise = 100
     # ad.options.const_speed = True
