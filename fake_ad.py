@@ -93,6 +93,18 @@ class FakeAD:
         # print(self.screensize[1] - y * self.SCALE)
         turtle.goto(x * self.SCALE, self.screensize[1] - y * self.SCALE)
 
+    def polyline(self, points, *args, **kwargs):
+        pen_down = kwargs.pop("pen_down", True)
+        if not points:
+            return
+        self.penup()
+        x0, y0 = points[0]
+        self.goto(x0, y0)
+        if pen_down:
+            self.pendown()
+        for x, y in points[1:]:
+            self.goto(x, y)
+
     def penup(self):
         self.pen_is_down = False
         turtle.penup()
