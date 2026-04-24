@@ -4,8 +4,9 @@ from tqdm import trange
 import math
 from PIL import Image
 import random
+import time
 
-random.seed(4)
+random.seed(time.time())
 
 
 def draw_polyline(ad, vertices: list[tuple[float, float]]):
@@ -16,11 +17,11 @@ def draw_polyline(ad, vertices: list[tuple[float, float]]):
 
 
 def main():
-    # from pyaxidraw import axidraw
-    from fake_ad import FakeAD
+    from pyaxidraw import axidraw
+    # from fake_ad import FakeAD
 
-    # ad = axidraw.AxiDraw()
-    ad = FakeAD()
+    ad = axidraw.AxiDraw()
+    # ad = FakeAD()
     ad.interactive()
     if not ad.connect():
         return 1
@@ -36,7 +37,7 @@ def main():
     H = 8.5
 
     SZ = 2
-    exp = 2
+    exp = 3
     circle_centers = []
     circle_rs = []
     smaxr = 2
@@ -80,8 +81,25 @@ def main():
             rejections = 0
             if smaxr < absminr:
                 break
-    for idx, [cx, cy] in enumerate(circle_centers):
-        cr = circle_rs[idx]
+
+    unvisited = set(range(len(circle_centers)))
+    cur_pos = (0, 0)
+    while unvisited:
+        closest_idx = None
+        closest_dist = float("inf")
+        for idx in unvisited:
+            cx, cy = circle_centers[idx]
+            cr = circle_rs[idx]
+            dist = math.sqrt((cur_pos[0] - cx) ** 2 + (cur_pos[1] - cy) ** 2)
+            if dist < closest_dist:
+                closest_dist = dist
+                closest_idx = idx
+        unvisited.remove(closest_idx)
+
+        cur_pos = circle_centers[closest_idx]
+
+        cx, cy = circle_centers[closest_idx]
+        cr = circle_rs[closest_idx]
         eps = 0.01
         steps = math.ceil(2 * math.pi * cr / eps)
         vertices = []
@@ -90,7 +108,22 @@ def main():
             x = cx + cr * math.cos(angle)
             y = cy + cr * math.sin(angle)
             vertices.append((x, y))
+        # if cr < 0.2 or random.random() < 0.8 * 1 / (cr**exp + 1):
+        #     draw_polyline(ad, vertices)
         draw_polyline(ad, vertices)
+
+           
+    # for idx, [cx, cy] in enumerate(circle_centers):
+    #     cr = circle_rs[idx]
+    #     eps = 0.01
+    #     steps = math.ceil(2 * math.pi * cr / eps)
+    #     vertices = []
+    #     for i in range(steps + 1):
+    #         angle = 2 * math.pi * i / steps
+    #         x = cx + cr * math.cos(angle)
+    #         y = cy + cr * math.sin(angle)
+    #         vertices.append((x, y))
+    #     draw_polyline(ad, vertices)
 
     ad.penup()
     ad.goto(0, 0)
