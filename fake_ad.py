@@ -18,8 +18,6 @@ class FakeAD:
         self.pup_travel_time = 0
         self.pd_travel_time = 0
 
-
-
         self.updowns = 0
 
         self.options = FakeOptions()  # dummy options object
@@ -92,6 +90,9 @@ class FakeAD:
                 self.pup_travel_time += self._dst2time(distance)
         # print(self.screensize[1] - y * self.SCALE)
         turtle.goto(x * self.SCALE, self.screensize[1] - y * self.SCALE)
+
+    def draw_path(self, points):
+        self.polyline(points)
 
     def polyline(self, points, *args, **kwargs):
         pen_down = kwargs.pop("pen_down", True)
