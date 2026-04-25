@@ -9,34 +9,42 @@ random.seed(4)
 
 
 def draw_polyline(ad, vertices: list[tuple[float, float]]):
+    eps = 0.01
     if len(vertices) >= 2:
-        ad.draw_path([[x, y] for (x, y) in vertices])
+        # ad.draw_path([[x, y] for (x, y) in vertices])
+        ad.goto(vertices[0][0], vertices[0][1])
+        ad.pendown()
+        last = vertices[0]
+        for x, y in vertices[1:]:
+            if (x - last[0]) ** 2 + (y - last[1]) ** 2 > eps**2:
+                ad.goto(x, y)
+                last = (x, y)
+        ad.penup()
     elif len(vertices) == 1:
         ad.moveto(vertices[0][0], vertices[0][1])
 
 
 def main():
-    # from pyaxidraw import axidraw
-    from fake_ad import FakeAD
+    from pyaxidraw import axidraw
+    # from fake_ad import FakeAD
 
-    # ad = axidraw.AxiDraw()
-    ad = FakeAD()
+    ad = axidraw.AxiDraw()
+    # ad = FakeAD()
     ad.interactive()
+    ad.options.speed_pendown = 1
+    ad.options.speed_penup = 50
+    # ad.options.const_speed = True
     if not ad.connect():
         return 1
-    ad.options.speed_pendown = 80
-    ad.options.speed_penup = 80
-    ad.options.pen_rate_lower = 100
-    ad.options.pen_rate_raise = 100
-    # ad.options.const_speed = True
+
     ad.penup()
 
-    R = 4
-    W = 11
-    H = 8.5
+    R = 1.9
+    W = 4.5
+    H = 4.5
     center = (W / 2, H / 2)
 
-    num_seeds = 100
+    num_seeds = 30
     seeds = []
     while len(seeds) < num_seeds:
         x = random.uniform(0, W)
@@ -81,7 +89,9 @@ def main():
         mask = cv2.bitwise_and(mask, domain)
         opened = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
 
-        contours, _ = cv2.findContours(opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        contours, _ = cv2.findContours(
+            opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         for c in contours:
             if len(c) < 2:
                 continue
