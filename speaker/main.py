@@ -228,8 +228,8 @@ def _pick_notes(active: dict[int, int], *, polyphony: int) -> list[int]:
         return []
     notes = sorted(active.keys())
     if polyphony <= 1:
-        return [notes[0]]
-    return notes[:polyphony]
+        return [notes[-1]]
+    return notes[-polyphony:]
 
 
 def play_midi_on_plotter(
