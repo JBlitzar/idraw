@@ -222,57 +222,6 @@ def draw_polyline(ad, vertices: list[tuple[float, float]]):
         ad.moveto(vertices[0][0], vertices[0][1])
 
 
-def followCanny(x, y):
-    points = []
-    h, w = edges.shape
-    stack = [(x, y)]
-    while stack:
-        cx, cy = stack.pop()
-        if edges[cy, cx] == 0:
-            continue
-        edges[cy, cx] = 0
-        points.append((cx, cy))
-        for dydx in [
-            (-1, 0),
-            (1, 0),
-            (0, -1),
-            (0, 1),
-            (-1, -1),
-            (-1, 1),
-            (1, -1),
-            (1, 1),
-        ]:
-            dx, dy = dydx
-            nx, ny = cx + dx, cy + dy
-            if 0 <= nx < w and 0 <= ny < h and edges[ny, nx] != 0:
-                stack.append((nx, ny))
-                break
-
-    pts = np.array(points, dtype=np.float32).reshape(-1, 1, 2)
-    simplified = cv2.approxPolyDP(pts, epsilon=1.5, closed=False)
-    simplified = simplified.reshape(-1, 2)
-
-    ad.goto(
-        simplified[0][0] * pix2in + OFFSET[0], simplified[0][1] * pix2in + OFFSET[1]
-    )
-    ad.pendown()
-    for p in simplified[1:]:
-        ad.goto(p[0] * pix2in + OFFSET[0], p[1] * pix2in + OFFSET[1])
-    ad.penup()
-    print(".")
-
-
-def followAllCanny():
-    h, w = edges.shape
-    for y in range(h):
-        for x in range(w):
-            if edges[y, x] != 0:
-                followCanny(x, y)
-
-
-followAllCanny()
-
-
 def main():
     from fake_ad import FakeAD
 
@@ -323,6 +272,70 @@ def main():
         print(f"Done {color} channel.")
 
     edges = cv2.Canny(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY), 100, 200)
+
+    pix2in = PIX2IN
+    OFFSET = offset
+
+    def simplify_canny_points(points):
+        if len(points) < 2:
+            return np.array(points, dtype=np.float32).reshape(-1, 2)
+
+        pts = np.array(points, dtype=np.float32).reshape(-1, 1, 2)
+        simplified = cv2.approxPolyDP(pts, epsilon=1.5, closed=False)
+        return simplified.reshape(-1, 2)
+
+    def followCanny(x, y):
+        points = []
+        h, w = edges.shape
+        stack = [(x, y)]
+        while stack:
+            cx, cy = stack.pop()
+            if edges[cy, cx] == 0:
+                continue
+            edges[cy, cx] = 0
+            points.append((cx, cy))
+            for dydx in [
+                (-1, 0),
+                (1, 0),
+                (0, -1),
+                (0, 1),
+                (-1, -1),
+                (-1, 1),
+                (1, -1),
+                (1, 1),
+            ]:
+                dx, dy = dydx
+                nx, ny = cx + dx, cy + dy
+                if 0 <= nx < w and 0 <= ny < h and edges[ny, nx] != 0:
+                    stack.append((nx, ny))
+                    break
+
+        simplified = simplify_canny_points(points)
+
+        if len(simplified) == 0:
+            return []
+
+        return [tuple(p) for p in simplified]
+
+    def followAllCanny():
+        h, w = edges.shape
+        polylines = []
+        for y in range(h):
+            for x in range(w):
+                if edges[y, x] != 0:
+                    polyline = followCanny(x, y)
+                    if len(polyline) >= 2:
+                        polylines.append(polyline)
+
+        return polylines
+
+    polylines = followAllCanny()
+    print(f"Line sort/merging... ({len(polylines)} polylines)")
+    polylines = greedy_linemerge_reorder_kdtree(polylines)
+    print(f"Drawing polyline... {len(polylines)} polylines")
+    for line in tqdm(polylines, desc="Drawing Canny polylines"):
+        line = [(x * pix2in + OFFSET[0], y * pix2in + OFFSET[1]) for (x, y) in line]
+        draw_polyline(ad, line)
 
     ad.penup()
     ad.goto(0, 0)
