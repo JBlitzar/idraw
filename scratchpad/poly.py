@@ -15,18 +15,18 @@ def hex_to_rgb(hex_color):
     )
 
 
-im = cv2.imread(os.path.join(os.path.dirname(__file__), "picture.png"))
+im = cv2.imread(os.path.join(os.path.dirname(__file__), "mountain.jpg"))
 if im is None:
     raise FileNotFoundError("Image not found")
 
 b, g, r = cv2.split(im)
 
-IM_WIDTH_IN = 6.5
+IM_WIDTH_IN = 10
 IM_HEIGHT_IN = IM_WIDTH_IN * im.shape[0] / im.shape[1]
 
 PIX2IN = IM_WIDTH_IN / im.shape[1]
 
-pen_width_in = 0.05
+pen_width_in = 0.03
 white_distance_in = 0.25
 
 
@@ -130,7 +130,9 @@ def relax_points(points, mask, iterations=10):
 
         subdiv = cv2.Subdiv2D((0, 0, w, h))
         for x, y in points:
-            subdiv.insert((float(x), float(y)))
+            x = min(max(float(x), 1e-3), w - 1e-3)
+            y = min(max(float(y), 1e-3), h - 1e-3)
+            subdiv.insert((x, y))
 
         facets, centers = subdiv.getVoronoiFacetList([])
 
@@ -220,6 +222,57 @@ def draw_polyline(ad, vertices: list[tuple[float, float]]):
         ad.moveto(vertices[0][0], vertices[0][1])
 
 
+def followCanny(x, y):
+    points = []
+    h, w = edges.shape
+    stack = [(x, y)]
+    while stack:
+        cx, cy = stack.pop()
+        if edges[cy, cx] == 0:
+            continue
+        edges[cy, cx] = 0
+        points.append((cx, cy))
+        for dydx in [
+            (-1, 0),
+            (1, 0),
+            (0, -1),
+            (0, 1),
+            (-1, -1),
+            (-1, 1),
+            (1, -1),
+            (1, 1),
+        ]:
+            dx, dy = dydx
+            nx, ny = cx + dx, cy + dy
+            if 0 <= nx < w and 0 <= ny < h and edges[ny, nx] != 0:
+                stack.append((nx, ny))
+                break
+
+    pts = np.array(points, dtype=np.float32).reshape(-1, 1, 2)
+    simplified = cv2.approxPolyDP(pts, epsilon=1.5, closed=False)
+    simplified = simplified.reshape(-1, 2)
+
+    ad.goto(
+        simplified[0][0] * pix2in + OFFSET[0], simplified[0][1] * pix2in + OFFSET[1]
+    )
+    ad.pendown()
+    for p in simplified[1:]:
+        ad.goto(p[0] * pix2in + OFFSET[0], p[1] * pix2in + OFFSET[1])
+    ad.penup()
+    print(".")
+
+
+def followAllCanny():
+    h, w = edges.shape
+    for y in range(h):
+        for x in range(w):
+            if edges[y, x] != 0:
+                followCanny(x, y)
+
+
+followAllCanny()
+
+
 def main():
     from fake_ad import FakeAD
 
@@ -243,11 +296,15 @@ def main():
 
     # mask_colors = subtractive_masks(im, PALETTE)
 
-    paper_w = 8.5
-    paper_h = 11
+    paper_w = 11
+    paper_h = 8.5
     offset = (paper_w - IM_WIDTH_IN) / 2, (paper_h - IM_HEIGHT_IN) / 2
 
-    mask_colors = {"black": cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)}
+    mask_colors = {
+        "black": cv2.convertScaleAbs(
+            cv2.equalizeHist(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)), alpha=1.5, beta=0
+        )
+    }
     for color, mask in mask_colors.items():
         ad._color = color
         print(f"Processing {color} channel...")
@@ -264,6 +321,8 @@ def main():
             l = [(x + offset[0], y + offset[1]) for (x, y) in l]
             draw_polyline(ad, l)
         print(f"Done {color} channel.")
+
+    edges = cv2.Canny(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY), 100, 200)
 
     ad.penup()
     ad.goto(0, 0)
