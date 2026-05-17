@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.spatial import cKDTree
-import heapq
 from tqdm import tqdm, trange
 
 
@@ -34,6 +33,10 @@ def greedy_linemerge_reorder_kdtree(paths, epsilon=0.01):
         meta.append((i, 0))
         meta.append((i, 1))
 
+    endpoint_path_ids = np.fromiter(
+        (path_id for path_id, _ in meta), dtype=int, count=len(meta)
+    )
+
     tree = cKDTree(endpoints)
 
     used = np.zeros(n, dtype=bool)
@@ -51,32 +54,16 @@ def greedy_linemerge_reorder_kdtree(paths, epsilon=0.01):
     ordered = [first]
     last_point = ordered[-1][-1]
 
-    print("setup done... building heap")
-
-    # ---- build initial heap of ALL candidates for first step ----
-    # heap entries: (distance, endpoint_index)
-    heap = []
-
-    for i, pt in enumerate(endpoints):
-        heapq.heappush(heap, (dist(last_point, pt), i))
+    print("setup done... selecting nearest endpoints")
 
     for _ in trange(n - 1):
-        found = None
-
-        while heap:
-            _, idx = heapq.heappop(heap)
-            path_id, is_end = meta[idx]
-
-            if used[path_id]:
-                continue
-
-            found = (path_id, is_end)
-            break
-
-        if found is None:
+        d2 = np.sum((endpoints - last_point) ** 2, axis=1)
+        d2[used[endpoint_path_ids]] = np.inf
+        idx = int(np.argmin(d2))
+        if not np.isfinite(d2[idx]):
             raise RuntimeError("No unused paths left (logic error or empty dataset)")
 
-        path_id, is_end = found
+        path_id, is_end = meta[idx]
         used[path_id] = True
 
         path = clean[path_id]
@@ -86,12 +73,6 @@ def greedy_linemerge_reorder_kdtree(paths, epsilon=0.01):
 
         ordered.append(path)
         last_point = path[-1]
-
-        # IMPORTANT: refresh heap for new anchor (cheap incremental rebuild)
-        heap = []
-        for i, pt in enumerate(endpoints):
-            if not used[meta[i][0]]:
-                heapq.heappush(heap, (dist(last_point, pt), i))
 
     # merge
     merged = []

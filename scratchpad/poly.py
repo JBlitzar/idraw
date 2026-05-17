@@ -21,12 +21,12 @@ if im is None:
 
 b, g, r = cv2.split(im)
 
-IM_WIDTH_IN = 5
+IM_WIDTH_IN = 6.5
 IM_HEIGHT_IN = IM_WIDTH_IN * im.shape[0] / im.shape[1]
 
 PIX2IN = IM_WIDTH_IN / im.shape[1]
 
-pen_width_in = 0.07
+pen_width_in = 0.05
 white_distance_in = 0.25
 
 
@@ -242,6 +242,11 @@ def main():
     # }
 
     # mask_colors = subtractive_masks(im, PALETTE)
+
+    paper_w = 8.5
+    paper_h = 11
+    offset = (paper_w - IM_WIDTH_IN) / 2, (paper_h - IM_HEIGHT_IN) / 2
+
     mask_colors = {"black": cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)}
     for color, mask in mask_colors.items():
         ad._color = color
@@ -254,8 +259,9 @@ def main():
         print(f"Line sort/merging... ({len(lines)} lines)")
         lines = greedy_linemerge_reorder_kdtree(lines)
         print(f"Drawing polyline... {len(lines)} lines")
-        print(lines[:5])
+        # print(lines[:5])
         for l in tqdm(lines, desc=f"Drawing {color} lines"):
+            l = [(x + offset[0], y + offset[1]) for (x, y) in l]
             draw_polyline(ad, l)
         print(f"Done {color} channel.")
 
