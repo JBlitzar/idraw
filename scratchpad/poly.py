@@ -5,6 +5,15 @@ import fake_ad
 import os
 import numpy as np
 from pp import greedy_linemerge_reorder_kdtree
+from tqdm import tqdm
+
+
+def hex_to_rgb(hex_color):
+    hex_color = hex_color.lstrip("#")
+    return np.array(
+        [int(hex_color[i : i + 2], 16) for i in (0, 2, 4)], dtype=np.float32
+    )
+
 
 im = cv2.imread(os.path.join(os.path.dirname(__file__), "picture.png"))
 if im is None:
@@ -17,7 +26,7 @@ IM_HEIGHT_IN = IM_WIDTH_IN * im.shape[0] / im.shape[1]
 
 PIX2IN = IM_WIDTH_IN / im.shape[1]
 
-pen_width_in = 0.035
+pen_width_in = 0.07
 white_distance_in = 0.25
 
 
@@ -29,6 +38,37 @@ def value_to_distance(value):
 
 def gaussian_blur(mask):
     return cv2.GaussianBlur(mask, (0, 0), 6)
+
+
+def subtractive_masks(image, PALETTE):
+    img = image.astype(np.float32)
+
+    # OpenCV uses BGR, convert palette to BGR too
+    palette = {name: hex_to_rgb(hex_color)[::-1] for name, hex_color in PALETTE.items()}
+
+    h, w, _ = img.shape
+
+    masks = {name: np.zeros((h, w), dtype=np.float32) for name in PALETTE}
+
+    # compute distances to each palette color
+    for name, color in palette.items():
+        diff = img - color  # broadcast over image
+        dist = np.linalg.norm(diff, axis=2)
+
+        masks[name] = dist
+
+    # convert distances → weights (inverse distance)
+    inv = {k: 1.0 / (v + 1e-6) for k, v in masks.items()}
+    total = sum(inv.values())
+
+    for k in inv:
+        inv[k] /= total  # normalize to sum=1
+
+    # optional: scale to 0–255 masks
+    for k in inv:
+        inv[k] = (inv[k] * 255).astype(np.uint8)
+
+    return inv
 
 
 def poisson_sample(darkness_mask):
@@ -194,6 +234,14 @@ def main():
 
     ad.penup()
 
+    # PALETTE = {
+    #     "yellow": "#FEFF1B",
+    #     "cyan": "#1ED4CE",
+    #     "magenta": "#8e0db5",
+    #     "black": "#000000",
+    # }
+
+    # mask_colors = subtractive_masks(im, PALETTE)
     mask_colors = {"black": cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)}
     for color, mask in mask_colors.items():
         ad._color = color
@@ -205,9 +253,10 @@ def main():
         lines = draw_lattice(ad, points)
         print(f"Line sort/merging... ({len(lines)} lines)")
         # lines = greedy_linemerge_reorder_kdtree(lines)
-        print(f"Drawing polyline..., {len(lines)} lines")
-        for p1, p2 in lines:
+        print(f"Drawing polyline... {len(lines)} lines")
+        for p1, p2 in tqdm(lines, desc=f"Drawing {color} lines"):
             draw_polyline(ad, [p1, p2])
+        print(f"Done {color} channel.")
 
     ad.penup()
     ad.goto(0, 0)
