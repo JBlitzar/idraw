@@ -4,6 +4,8 @@ from tqdm import trange
 import math
 from PIL import Image
 import random
+from pp import greedy_linemerge_reorder_2opt
+
 
 random.seed(4)
 
