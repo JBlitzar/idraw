@@ -4,7 +4,7 @@ import math
 import fake_ad
 import os
 import numpy as np
-from pp import greedy_linemerge_reorder_2opt
+from pp import greedy_linemerge_reorder_kdtree
 
 im = cv2.imread(os.path.join(os.path.dirname(__file__), "picture.png"))
 if im is None:
@@ -32,7 +32,7 @@ def gaussian_blur(mask):
 
 
 def poisson_sample(darkness_mask):
-    darkness_mask = gaussian_blur(darkness_mask)
+    # darkness_mask = gaussian_blur(darkness_mask)
 
     h, w = darkness_mask.shape
     cell_size = pen_width_in / PIX2IN
@@ -204,7 +204,7 @@ def main():
         print("Relaxed. Drawing lattice...")
         lines = draw_lattice(ad, points)
         print(f"Line sort/merging... ({len(lines)} lines)")
-        lines = greedy_linemerge_reorder_2opt(lines)
+        # lines = greedy_linemerge_reorder_kdtree(lines)
         print(f"Drawing polyline..., {len(lines)} lines")
         for p1, p2 in lines:
             draw_polyline(ad, [p1, p2])

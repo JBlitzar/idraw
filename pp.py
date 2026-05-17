@@ -1,22 +1,19 @@
 import numpy as np
+from scipy.spatial import cKDTree
+import heapq
 
 
-def greedy_linemerge_reorder_2opt(paths, epsilon=0.01):
-    # Each path is a list of (x, y) points
-    # We want to reorder the paths to minimize the total travel distance
-    # can merge if endpoints are within eps of each other
-
-    # returns: a list of merged paths
+def greedy_linemerge_reorder_kdtree(paths, epsilon=0.01):
     def as_points(path):
         arr = np.asarray(path, dtype=float)
         if arr.size == 0:
             return arr.reshape(0, 2)
         arr = np.atleast_2d(arr)
         if arr.shape[1] != 2:
-            raise ValueError("Each path must be a sequence of (x, y) points")
+            raise ValueError("Each path must be (x, y)")
         return arr
 
-    def d(a, b):
+    def dist(a, b):
         return float(np.linalg.norm(a - b))
 
     clean = [as_points(p) for p in paths]
@@ -24,91 +21,86 @@ def greedy_linemerge_reorder_2opt(paths, epsilon=0.01):
     if not clean:
         return []
 
-    # Greedy ordering by nearest endpoint, choosing orientation per path.
-    remaining = list(range(len(clean)))
-    origin = np.zeros(2, dtype=float)
+    n = len(clean)
 
-    seed = min(
-        remaining,
-        key=lambda i: min(d(clean[i][0], origin), d(clean[i][-1], origin)),
-    )
-    first = clean[seed]
-    if d(first[-1], origin) < d(first[0], origin):
+    # endpoints
+    endpoints = np.zeros((2 * n, 2), dtype=float)
+    meta = []
+
+    for i, p in enumerate(clean):
+        endpoints[2 * i] = p[0]
+        endpoints[2 * i + 1] = p[-1]
+        meta.append((i, 0))
+        meta.append((i, 1))
+
+    tree = cKDTree(endpoints)
+
+    used = np.zeros(n, dtype=bool)
+
+    # seed
+    origin = np.zeros(2)
+    seed_idx = np.argmin(np.linalg.norm(endpoints - origin, axis=1))
+    seed_path, seed_end = meta[seed_idx]
+    used[seed_path] = True
+
+    first = clean[seed_path]
+    if seed_end == 1:
         first = first[::-1].copy()
 
     ordered = [first]
-    remaining.remove(seed)
+    last_point = ordered[-1][-1]
 
-    while remaining:
-        end_pt = ordered[-1][-1]
-        best_idx = None
-        best_path = None
-        best_cost = None
+    # ---- build initial heap of ALL candidates for first step ----
+    # heap entries: (distance, endpoint_index)
+    heap = []
 
-        for idx in remaining:
-            path = clean[idx]
-            cost_forward = d(end_pt, path[0])
-            cost_reverse = d(end_pt, path[-1])
-            if cost_reverse < cost_forward:
-                oriented = path[::-1].copy()
-                cost = cost_reverse
-            else:
-                oriented = path.copy()
-                cost = cost_forward
+    for i, pt in enumerate(endpoints):
+        heapq.heappush(heap, (dist(last_point, pt), i))
 
-            if best_cost is None or cost < best_cost - 1e-12:
-                best_idx = idx
-                best_path = oriented
-                best_cost = cost
+    for _ in range(n - 1):
+        found = None
 
-        ordered.append(best_path)
-        remaining.remove(best_idx)
+        while heap:
+            _, idx = heapq.heappop(heap)
+            path_id, is_end = meta[idx]
 
-    # 2-opt improvement: reverse subsequences when it reduces travel distance.
-    n = len(ordered)
-    if n > 2:
-        improved = True
-        while improved:
-            improved = False
-            best_delta = 0.0
-            best_i = None
-            best_k = None
+            if used[path_id]:
+                continue
 
-            for i in range(n - 1):
-                for k in range(i + 1, n):
-                    old_cost = 0.0
-                    new_cost = 0.0
+            found = (path_id, is_end)
+            break
 
-                    if i > 0:
-                        old_cost += d(ordered[i - 1][-1], ordered[i][0])
-                        new_cost += d(ordered[i - 1][-1], ordered[k][-1])
+        if found is None:
+            raise RuntimeError("No unused paths left (logic error or empty dataset)")
 
-                    if k < n - 1:
-                        old_cost += d(ordered[k][-1], ordered[k + 1][0])
-                        new_cost += d(ordered[i][0], ordered[k + 1][0])
+        path_id, is_end = found
+        used[path_id] = True
 
-                    delta = new_cost - old_cost
-                    if delta < best_delta - 1e-12:
-                        best_delta = delta
-                        best_i = i
-                        best_k = k
+        path = clean[path_id]
 
-            if best_i is not None:
-                ordered[best_i : best_k + 1] = [
-                    p[::-1].copy() for p in ordered[best_i : best_k + 1][::-1]
-                ]
-                improved = True
+        if is_end == 1:
+            path = path[::-1].copy()
 
-    # Merge adjacent paths whose endpoints are close enough.
+        ordered.append(path)
+        last_point = path[-1]
+
+        # IMPORTANT: refresh heap for new anchor (cheap incremental rebuild)
+        heap = []
+        for i, pt in enumerate(endpoints):
+            if not used[meta[i][0]]:
+                heapq.heappush(heap, (dist(last_point, pt), i))
+
+    # merge
     merged = []
     current = ordered[0].copy()
+
     for path in ordered[1:]:
-        if d(current[-1], path[0]) <= epsilon:
+        if dist(current[-1], path[0]) <= epsilon:
             if len(path) > 1:
                 current = np.vstack([current, path[1:]])
         else:
             merged.append(current)
             current = path.copy()
-    merged.append(current)
 
+    merged.append(current)
     return [p.tolist() for p in merged]
