@@ -252,10 +252,11 @@ def main():
         print("Relaxed. Drawing lattice...")
         lines = draw_lattice(ad, points)
         print(f"Line sort/merging... ({len(lines)} lines)")
-        # lines = greedy_linemerge_reorder_kdtree(lines)
+        lines = greedy_linemerge_reorder_kdtree(lines)
         print(f"Drawing polyline... {len(lines)} lines")
-        for p1, p2 in tqdm(lines, desc=f"Drawing {color} lines"):
-            draw_polyline(ad, [p1, p2])
+        print(lines[:5])
+        for l in tqdm(lines, desc=f"Drawing {color} lines"):
+            draw_polyline(ad, l)
         print(f"Done {color} channel.")
 
     ad.penup()

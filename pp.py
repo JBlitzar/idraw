@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.spatial import cKDTree
 import heapq
+from tqdm import tqdm, trange
 
 
 def greedy_linemerge_reorder_kdtree(paths, epsilon=0.01):
@@ -50,6 +51,8 @@ def greedy_linemerge_reorder_kdtree(paths, epsilon=0.01):
     ordered = [first]
     last_point = ordered[-1][-1]
 
+    print("setup done... building heap")
+
     # ---- build initial heap of ALL candidates for first step ----
     # heap entries: (distance, endpoint_index)
     heap = []
@@ -57,7 +60,7 @@ def greedy_linemerge_reorder_kdtree(paths, epsilon=0.01):
     for i, pt in enumerate(endpoints):
         heapq.heappush(heap, (dist(last_point, pt), i))
 
-    for _ in range(n - 1):
+    for _ in trange(n - 1):
         found = None
 
         while heap:
@@ -94,7 +97,7 @@ def greedy_linemerge_reorder_kdtree(paths, epsilon=0.01):
     merged = []
     current = ordered[0].copy()
 
-    for path in ordered[1:]:
+    for path in tqdm(ordered[1:], desc="Merging lines"):
         if dist(current[-1], path[0]) <= epsilon:
             if len(path) > 1:
                 current = np.vstack([current, path[1:]])
