@@ -22,6 +22,8 @@ class FakeAD:
 
         self.options = FakeOptions()  # dummy options object
 
+        self._fake_ad_color = (0, 0, 0)
+
         screen = turtle.Screen()
         screen.screensize(*screensize)
         screen.setworldcoordinates(0, 0, screensize[0], screensize[1])
@@ -36,6 +38,16 @@ class FakeAD:
 
         self.bbox(11, 8.5)
         self.bbox(8.5, 11)
+
+    @property
+    def _color(self):
+        return self._fake_ad_color
+
+    @_color.setter
+    def _color(self, value):
+        # print(f"Color changed to {value}")
+        turtle.pencolor(value)
+        self._fake_ad_color = value
 
     def bbox(self, w, h):
         self.goto(0, 0, track=False)
