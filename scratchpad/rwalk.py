@@ -13,6 +13,14 @@ from tqdm import trange
 random.seed(4)
 
 
+def _mises(k, alpha):
+    # t = np.random.uniform(0, 2 * np.pi)
+    # return np.e ** (k * np.cos(t - alpha))
+    theta = np.random.vonmises(mu=alpha, kappa=k)
+    theta %= 2 * np.pi
+    return theta
+
+
 def draw_polyline(ad, vertices: list[tuple[float, float]]):
     if len(vertices) >= 2:
         ad.draw_path([[x, y] for (x, y) in vertices])
@@ -23,19 +31,23 @@ def draw_polyline(ad, vertices: list[tuple[float, float]]):
 opensimplex.seed(42)
 
 
-width, height = int(11 * 10), int(8.5 * 10)
+width, height = int(10.5 * 10), int(8 * 10)
 scale = 0.1
 WIDTH_IN = 10.5
 paper_size = (11, 8.5)
 PIX2IN = WIDTH_IN / width
-OFFSET = ((paper_size[0] - WIDTH_IN) / 2, (paper_size[1] - height * PIX2IN) / 2)
+OFFSET = (
+    0.125 / 2 + (paper_size[0] - width * PIX2IN) / 2,
+    0.125 / 4 + (paper_size[1] - height * PIX2IN) / 2,
+)
+
 
 noise_array = np.zeros((height, width))
 # populate
 for y in range(height):
     for x in range(width):
         noise_array[y][x] = (
-            (opensimplex.noise2(x * scale, y * scale) / 2 + 0.5) ** 1.2 * 0.2 / PIX2IN
+            (opensimplex.noise2(x * scale, y * scale) / 2 + 0.5) ** 1.3 * 0.2 / PIX2IN
         )
 
 
@@ -60,15 +72,18 @@ def main():
     i = 0
     max_i = 100_000
     ad.goto(pos[0] * PIX2IN + OFFSET[0], pos[1] * PIX2IN + OFFSET[1])
-    ad.pendown()
-    path = [pos]
+    # ad.pendown()
+    path = []
+    last_angle = 0
     while True:
         x = pos[0] * PIX2IN + OFFSET[0]
         y = pos[1] * PIX2IN + OFFSET[1]
         # ad.goto(x, y)
         path.append((x, y))
         print(f"noise: {noise_array[int(pos[1])][int(pos[0])]}")
-        ang = random.random() * 2 * math.pi
+        ang = _mises(0.7, last_angle)
+
+        last_angle = ang
         new_pos = (
             pos[0] + math.cos(ang) * noise_array[int(pos[1])][int(pos[0])],
             pos[1] + math.sin(ang) * noise_array[int(pos[1])][int(pos[0])],
@@ -84,6 +99,8 @@ def main():
             print(f"Step {i}, position: {pos}")
         if i >= max_i:
             break
+
+    ad.penup()
     ad.polyline(path)
     ad.penup()
     ad.goto(0, 0)
