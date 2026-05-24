@@ -48,9 +48,7 @@ SVG_DPI = 96.0  # SVG spec default
 TIMELAPSE = True
 TIMELAPSE_LENS_POSITION = 0.95
 timestamp = time.strftime("%Y%m%d_%H%M%S")
-out_dir = os.path.join(
-    os.path.dirname(__file__), "timelapse", timestamp
-)
+out_dir = os.path.join(os.path.dirname(__file__), "timelapse", timestamp)
 final_dir = os.path.join(os.path.dirname(__file__), "lapses")
 
 
@@ -99,7 +97,7 @@ def svg_to_rasterized_paths(svg_file, points_per_inch=10):
     return rasterized
 
 
-paths = svg_to_rasterized_paths("wb.svg", points_per_inch=35)
+paths = svg_to_rasterized_paths("picture_ignored.svg", points_per_inch=35)
 
 
 if not connected:
@@ -113,8 +111,8 @@ start_timelapse()
 
 ad.options.clip_to_page = False
 
-OFFSET = (0.6, 0)  # (2.25,2.5)
-SCALE = 1.2
+OFFSET = (-1, -1)  # (2.25,2.5)
+SCALE = 1.5
 for i, path in enumerate(paths):
     print(path)
     dip()
