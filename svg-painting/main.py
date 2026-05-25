@@ -111,7 +111,7 @@ start_timelapse()
 
 ad.options.clip_to_page = False
 
-OFFSET = (-1, -1)  # (2.25,2.5)
+OFFSET = (-1 + 0.25, -1 + 1)  # (2.25,2.5)
 SCALE = 1.5
 for i, path in enumerate(paths):
     print(path)

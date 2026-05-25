@@ -15,7 +15,7 @@ def hex_to_rgb(hex_color):
     )
 
 
-im = cv2.imread(os.path.join(os.path.dirname(__file__), "mountain.jpg"))
+im = cv2.imread(os.path.join(os.path.dirname(__file__), "p_ignored.jpg"))
 if im is None:
     raise FileNotFoundError("Image not found")
 
