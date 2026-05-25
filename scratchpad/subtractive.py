@@ -17,8 +17,9 @@ def compose(colors):
 
 PALETTE = {
     "yellow": "#FEFF1B",
-    "cyan": "#1ED4CE",
-    "magenta": "#8e0db5",
+    "cyan": "#0C7DB1",
+    "magenta": "#7a0db5",
+    "orange": "#f78f11",
     "black": "#000000",
 }
 
