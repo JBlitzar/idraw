@@ -115,3 +115,95 @@ for y in range(IMG_HEIGHT_CHARS):
         bitmap = atlas[atlas_char]
         img.paste(Image.fromarray(bitmap), (x * cell_w, y * cell_h))
 img.save("output.png")
+
+
+import svgwrite
+from fontTools.pens.svgPathPen import SVGPathPen
+from fontTools.ttLib import TTFont
+
+# --- SVG export ---
+# 8.5x11 landscape in mm, converted to px at 96dpi
+PAGE_W_MM = 279.4  # 11"
+PAGE_H_MM = 215.9  # 8.5"
+MM_PER_PX = 25.4 / 96
+
+# Load font for vector outlines
+tt_font = TTFont(FONT_PATH)
+glyph_set = tt_font.getGlyphSet()
+cmap = tt_font.getBestCmap()
+units_per_em = tt_font["head"].unitsPerEm
+
+# Scale factor: map font UPM to cell_h in px, then to mm
+px_per_unit = cell_h / units_per_em
+mm_per_unit = px_per_unit * MM_PER_PX * 0.8
+
+
+# ASCII art dimensions in mm
+art_w_mm = IMG_WIDTH_CHARS * cell_w * MM_PER_PX
+art_h_mm = IMG_HEIGHT_CHARS * cell_h * MM_PER_PX
+
+# Center on page
+origin_x = (PAGE_W_MM - art_w_mm) / 2
+origin_y = (PAGE_H_MM - art_h_mm) / 2
+
+dwg = svgwrite.Drawing(
+    "output.svg",
+    size=(f"{PAGE_W_MM}mm", f"{PAGE_H_MM}mm"),
+    viewBox=f"0 0 {PAGE_W_MM} {PAGE_H_MM}",
+)
+
+lines = rstr  # rstr still has newlines stripped; rebuild from grid
+char_grid = [
+    rstr[y * IMG_WIDTH_CHARS + x]
+    for y in range(IMG_HEIGHT_CHARS)
+    for x in range(IMG_WIDTH_CHARS)
+]
+
+for y in range(IMG_HEIGHT_CHARS):
+    for x in range(IMG_WIDTH_CHARS):
+        char = char_grid[y * IMG_WIDTH_CHARS + x]
+        if char == " ":
+            continue
+
+        codepoint = ord(char)
+        if codepoint not in cmap:
+            continue
+        glyph_name = cmap[codepoint]
+        if glyph_name not in glyph_set:
+            continue
+
+        # Cell top-left in mm
+        cell_x_mm = origin_x + x * cell_w * MM_PER_PX
+        cell_y_mm = origin_y + y * cell_h * MM_PER_PX
+
+        # Get glyph outline as SVG path
+        pen = SVGPathPen(glyph_set)
+        glyph_set[glyph_name].draw(pen)
+        path_data = pen.getCommands()
+
+        if not path_data:
+            continue
+
+        # Font coordinates: origin at baseline, y-up. SVG is y-down.
+        # Translate so glyph sits in cell: baseline at cell bottom minus descender.
+        metrics = glyph_set[glyph_name]
+        baseline_y_mm = cell_y_mm + cell_h * MM_PER_PX  # bottom of cell
+
+        # Transform: scale, flip y, translate to cell position
+        transform = (
+            f"translate({cell_x_mm},{baseline_y_mm}) "
+            f"scale({mm_per_unit},{-mm_per_unit})"
+        )
+
+        dwg.add(
+            dwg.path(
+                d=path_data,
+                transform=transform,
+                fill="none",
+                stroke="black",
+                stroke_width="0.2mm",
+            )
+        )
+
+dwg.save()
+print("Saved output.svg")
