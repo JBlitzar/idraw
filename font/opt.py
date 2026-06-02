@@ -1,5 +1,5 @@
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 
 from raster import (
     CELL_HEIGHT_PX,
@@ -20,15 +20,17 @@ ar = aspect_ratio(face)
 # print(cell_w, cell_h)
 
 
-img = Image.open("circle.jpg").convert("L")
+# img = Image.open("fingerprint.jpg").convert("L")
+img = ImageOps.invert(Image.open("sg.png").convert("L"))
 
 
-IMG_WIDTH_CHARS = 50
+IMG_WIDTH_CHARS = 100
 IMG_HEIGHT_CHARS = int(img.size[1] / img.size[0] * IMG_WIDTH_CHARS * ar)
 IMG_WIDTH_PX = IMG_WIDTH_CHARS * cell_w
 IMG_HEIGHT_PX = IMG_HEIGHT_CHARS * cell_h
 # print(IMG_WIDTH_CHARS, IMG_HEIGHT_CHARS)
 img = img.resize((IMG_WIDTH_PX, IMG_HEIGHT_PX))
+img = ImageOps.equalize(img)
 
 # Find the brightness range the atlas can represent
 char_means = {char: atlas[char].mean() for char in atlas}
@@ -44,10 +46,12 @@ def fmap(v, vmin, vmax, out_min, out_max):
 
 
 img = np.array(img).astype(np.float32)
-img = fmap(img, np.min(img), np.max(img), 100, 255)
+img = fmap(img, np.min(img), np.max(img), 0, 255)
 print(img)
 img = Image.fromarray(img.astype(np.uint8))
 print(np.array(img))
+
+
 # img.save("mountain_atlas.jpg")
 
 
