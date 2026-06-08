@@ -23,13 +23,13 @@ def N(x,y):
 	global B,E,C;y=-y;A=L(Q((x+y-(B+E))*F));D=L(Q((x-y-(B-E))*F));G=max(abs(A),abs(D))
 	if G==0:B,E=x,y;return
 	C.append(f"SM,{G},{A},{D}");B,E=x,y
-W=11.
+W=8.5
 def O(c):
 	A=ord(c)-32
 	if A<0 or A>94:return 25
 	return G[A*112+1]
 def X(s,scale=.005):
-	M=True;F=False;B=scale;A=0,0;C=F;U=s.split(I)
+	s=s.replace('p = ','p='+chr(39)).replace('Z()','Z()'+chr(39));M=True;F=False;B=scale;A=0,0;C=F;U=s.split(I)
 	for(X,Y)in R(U):
 		if X>0:A=0,A[1]-25*B
 		P=Y.split(' ')
@@ -37,6 +37,7 @@ def X(s,scale=.005):
 			a=sum(O(A)for A in Q)*B
 			if A[0]>0 and A[0]+a>W:A=0,A[1]-25*B
 			for b in Q:
+				if A[0]>W:A=0,A[1]-25*B
 				D=ord(b)-32
 				if D<0 or D>94:A=A[0]+25*B,A[1];continue
 				c=G[D*112];d=G[D*112+1];E=G[D*112+2:D*112+2+c*2];L=M
@@ -62,7 +63,7 @@ def Z(port_path=None):
 	E=D.open(G,D.O_RDWR|D.O_NOCTTY);B=A.tcgetattr(E);B[0]=0;B[1]=0;B[2]=A.CS8|A.CREAD|A.CLOCAL;B[3]=0;B[4]=A.B9600;B[5]=A.B9600;B[6][A.VMIN]=1;B[6][A.VTIME]=10;A.tcsetattr(E,A.TCSANOW,B)
 	def J(cmd):
 		D.write(E,(cmd+H).encode());A=b''
-		while b''.join([H,I])not in A:A+=D.read(E,64)
+		while(H+I).encode()not in A:A+=D.read(E,64)
 		return A.decode().strip()
 	K=.15;J('V')
 	for F in C:
@@ -86,7 +87,7 @@ s()
 """
     ns = {}
     exec(p, ns)
-    ns['print'](t % (p, t), end='')
+    ns["print"](t % (p, t), end="")
 
 
 s()
