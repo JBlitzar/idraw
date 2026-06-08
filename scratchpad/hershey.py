@@ -119,9 +119,10 @@ def draw_string(s, scale=0.005):
                 offset = (offset[0] + char_spacing(" ") * scale, offset[1])
 
 
-draw_string(
-    "Hello, World!\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-)
+# draw_string(
+#     "Hello, World!\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+# )
+
 
 import glob
 import os
@@ -174,5 +175,6 @@ def send(port_path=None):
     os.close(fd)
 
 
-if __name__ == "__main__":
+def print(s):
+    draw_string(s)
     send()
