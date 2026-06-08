@@ -584,41 +584,129 @@ def pd():
     global CODE
     CODE.append("SP,1")
 
+STEPS_PER_INCH = 2032
+
 def goto(x,y):
-    global X,Y
+    global X,Y,CODE
 
-    dm1=(x+y)-(X+Y)
-    dm2=(x-y)-(X-y)
+    dm1 = int(round(((x+y) - (X+Y)) * STEPS_PER_INCH))
+    dm2 = int(round(((x-y) - (X-Y)) * STEPS_PER_INCH))
 
-    t=max(abs(dm1),abs(dm2))
+    t = max(abs(dm1), abs(dm2))
+    if t == 0:
+        X,Y = x,y
+        return
 
     CODE.append(f"SM,{t},{dm1},{dm2}")
 
-    X,Y=x,y
+    X,Y = x,y
 
 
 
 
-def draw_string(s, scale=1.0):
-    # For each character the first item is the number of vertices needed to describe the character. The second item is the horizontal spacing of the character, the distance from the bottom left to the bottom right. The subsequent items are vertex pairs. A vertex of (-1,-1) indicates a pen up operation.
+PAGE_WIDTH = 11.0
+
+def char_spacing(c):
+    char = ord(c) - 32
+    if char < 0 or char > 94:
+        return 25
+    return arr[char*112+1]
+
+def draw_string(s, scale=0.005):
     offset = (0,0)
-    for c in s:
-        char = ord(c) - 32
-        if c == "\n":
+    pen_down = False
+
+    lines = s.split('\n')
+    for li, line in enumerate(lines):
+        if li > 0:
             offset = (0, offset[1] - 25*scale)
-            continue
-        elif char < 0 or char > 94:
-            offset = (offset[0] + 25*scale, offset[1])
-            continue
-        n_vertices = arr[char*112]
-        spacing = arr[char*112+1]
-        vertices = arr[char*112+2:char*112+2+n_vertices*2]
+        words = line.split(' ')
+        for wi, word in enumerate(words):
+            ww = sum(char_spacing(c) for c in word) * scale
+            if offset[0] > 0 and offset[0] + ww > PAGE_WIDTH:
+                offset = (0, offset[1] - 25*scale)
 
-        for i in range(0, len(vertices), 2):
-            if vertices[i] == -1 and vertices[i+1] == -1:
-                pu()
-            else:
-                goto(offset[0]+vertices[i]*scale, offset[1]+vertices[i+1]*scale)
-                pd()
+            for c in word:
+                char = ord(c) - 32
+                if char < 0 or char > 94:
+                    offset = (offset[0] + 25*scale, offset[1])
+                    continue
+                n_vertices = arr[char*112]
+                spacing = arr[char*112+1]
+                vertices = arr[char*112+2:char*112+2+n_vertices*2]
 
-        offset = (offset[0] + spacing*scale, offset[1])
+                need_move = True
+                for vi in range(0, len(vertices), 2):
+                    if vertices[vi] == -1 and vertices[vi+1] == -1:
+                        if pen_down:
+                            pu()
+                            pen_down = False
+                        need_move = True
+                    else:
+                        x = offset[0] + vertices[vi]*scale
+                        y = offset[1] + vertices[vi+1]*scale
+                        if need_move:
+                            if pen_down:
+                                pu()
+                                pen_down = False
+                            goto(x, y)
+                            pd()
+                            pen_down = True
+                            need_move = False
+                        else:
+                            goto(x, y)
+
+                if pen_down:
+                    pu()
+                    pen_down = False
+
+                offset = (offset[0] + spacing*scale, offset[1])
+
+            if wi < len(words) - 1:
+                offset = (offset[0] + char_spacing(' ')*scale, offset[1])
+
+draw_string("Hello, World!\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")
+
+import os, termios, time, glob
+
+def find_ebb():
+    for p in glob.glob('/dev/ttyACM*') + glob.glob('/dev/ttyUSB*'):
+        return p
+    return None
+
+def send(port_path=None):
+    path = port_path or find_ebb()
+    if not path:
+        raise RuntimeError("No EBB device found")
+
+    fd = os.open(path, os.O_RDWR | os.O_NOCTTY)
+
+    attrs = termios.tcgetattr(fd)
+    attrs[0] = 0            # iflag
+    attrs[1] = 0            # oflag
+    attrs[2] = termios.CS8 | termios.CREAD | termios.CLOCAL  # cflag
+    attrs[3] = 0            # lflag
+    attrs[4] = termios.B9600  # ispeed (EBB ignores baud but needs valid config)
+    attrs[5] = termios.B9600  # ospeed
+    attrs[6][termios.VMIN] = 1
+    attrs[6][termios.VTIME] = 10
+    termios.tcsetattr(fd, termios.TCSANOW, attrs)
+
+    def write_cmd(cmd):
+        os.write(fd, (cmd + '\r').encode())
+        resp = b''
+        while b'\r\n' not in resp:
+            resp += os.read(fd, 64)
+        return resp.decode().strip()
+
+    write_cmd("V")  # version check / wake
+    for cmd in CODE:
+        write_cmd(cmd)
+        if cmd.startswith("SM,"):
+            dur = int(cmd.split(',')[1])
+            time.sleep(dur / 1000.0)
+
+    os.close(fd)
+
+if __name__ == '__main__':
+    send()
