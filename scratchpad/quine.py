@@ -28,7 +28,7 @@ def O(c):
 	A=ord(c)-32
 	if A<0 or A>94:return 25
 	return G[A*112+1]
-def X(s,scale=.0057):
+def X(s,scale=.0055):
 	s=s.replace('p = ','p='+chr(39)).replace('Z()','Z()'+chr(39));M=True;F=False;B=scale;A=0,0;C=F
 	for b in s:
 		if b==I:A=0,A[1]-25*B;continue
