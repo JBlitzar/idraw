@@ -1,4 +1,5 @@
-p = """R=enumerate
+p = """_f='Quine program. 11x17 vertical paper. This is a drawing of the code used to generate this drawing.'
+R=enumerate
 Q=round
 L=int
 K=len
@@ -46,9 +47,8 @@ def X(s,scale=.0076):
 				S=A[0]+E[H]*B;T=A[1]+E[H+1]*B
 				T=-T
 				S,T=_T(S,T)
-				S=0.25-S
-				# __import__("sys").stdout.write(f\"{S} {T}\\n\")
-				# exit()
+				S=0.5-S
+				T+=0.25
 				if L:
 					if C:J();C=F
 					N(S,T);V();C=M;L=F
