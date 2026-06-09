@@ -1,4 +1,5 @@
-p = """R=enumerate
+p = """_f='Quine program. 11x17 vertical paper. This is a drawing of the code used to generate this drawing.'
+R=enumerate
 Q=round
 L=int
 K=len
@@ -15,20 +16,21 @@ def U(s):
 	return C
 G=U(S)
 C=[]
-B=E=0
+B=.25
+E=.25
 def J():global C;C.append('SP,1')
 def V():global C;C.append('SP,0')
 F=2032
 def N(x,y):
-	global B,E,C;y=-y;A=L(Q((x+y-(B+E))*F));D=L(Q((x-y-(B-E))*F));G=max(abs(A),abs(D))
-	if G==0:B,E=x,y;return
-	C.append(f"SM,{G},{A},{D}");B,E=x,y
-W=8.5
+	global B,E,C;u=-y+.25;v=x+.25;A=L(Q((u+v-(B+E))*F));D=L(Q((u-v-(B-E))*F));G=max(abs(A),abs(D))
+	if G==0:B,E=u,v;return
+	C.append(f"SM,{G},{A},{D}");B,E=u,v
+W=10.5
 def O(c):
 	A=ord(c)-32
 	if A<0 or A>94:return 25
 	return G[A*112+1]
-def X(s,scale=.0055):
+def X(s,scale=.0076):
 	s=s.replace('p = ','p='+chr(39)).replace('Z()','Z()'+chr(39));M=True;F=False;B=scale;A=0,0;C=F
 	for b in s:
 		if b==I:A=0,A[1]-25*B;continue
