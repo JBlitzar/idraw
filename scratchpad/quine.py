@@ -28,32 +28,26 @@ def O(c):
 	A=ord(c)-32
 	if A<0 or A>94:return 25
 	return G[A*112+1]
-def X(s,scale=.005):
-	s=s.replace('p = ','p='+chr(39)).replace('Z()','Z()'+chr(39));M=True;F=False;B=scale;A=0,0;C=F;U=s.split(I)
-	for(X,Y)in R(U):
-		if X>0:A=0,A[1]-25*B
-		P=Y.split(' ')
-		for(Z,Q)in R(P):
-			a=sum(O(A)for A in Q)*B
-			if A[0]>0 and A[0]+a>W:A=0,A[1]-25*B
-			for b in Q:
-				if A[0]>W:A=0,A[1]-25*B
-				D=ord(b)-32
-				if D<0 or D>94:A=A[0]+25*B,A[1];continue
-				c=G[D*112];d=G[D*112+1];E=G[D*112+2:D*112+2+c*2];L=M
-				for H in range(0,K(E),2):
-					if E[H]==-1 and E[H+1]==-1:
-						if C:J();C=F
-						L=M
-					else:
-						S=A[0]+E[H]*B;T=A[1]+E[H+1]*B
-						if L:
-							if C:J();C=F
-							N(S,T);V();C=M;L=F
-						else:N(S,T)
+def X(s,scale=.0057):
+	s=s.replace('p = ','p='+chr(39)).replace('Z()','Z()'+chr(39));M=True;F=False;B=scale;A=0,0;C=F
+	for b in s:
+		if b==I:A=0,A[1]-25*B;continue
+		if A[0]+O(b)*B>W:A=0,A[1]-25*B
+		D=ord(b)-32
+		if D<0 or D>94:A=A[0]+25*B,A[1];continue
+		c=G[D*112];d=G[D*112+1];E=G[D*112+2:D*112+2+c*2];L=M
+		for H in range(0,K(E),2):
+			if E[H]==-1 and E[H+1]==-1:
 				if C:J();C=F
-				A=A[0]+d*B,A[1]
-			if Z<K(P)-1:A=A[0]+O(' ')*B,A[1]
+				L=M
+			else:
+				S=A[0]+E[H]*B;T=A[1]+E[H+1]*B
+				if L:
+					if C:J();C=F
+					N(S,T);V();C=M;L=F
+				else:N(S,T)
+		if C:J();C=F
+		A=A[0]+d*B,A[1]
 import glob as M,os as D,termios as A,time as P
 def Y():
 	for A in M.glob('/dev/ttyACM*')+M.glob('/dev/ttyUSB*'):return A
@@ -68,7 +62,7 @@ def Z(port_path=None):
 	K=.15;J('V')
 	for F in C:
 		J(F)
-		if F.startswith('SM,'):M=L(F.split(',')[1]);P.sleep(M/1e3)
+		if F.startswith('SM,'):P.sleep(L(F.split(',')[1])/1e3)
 		elif F.startswith('SP,'):P.sleep(K)
 	D.close(E)
 def print(s,**_):X(s);Z()"""
