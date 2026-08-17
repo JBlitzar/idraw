@@ -22,16 +22,24 @@ def V():global C;C.append('SP,0')
 F=2032
 def _T(x,y):
    	return -y,10.5-x
+Vm=1e3;Am=2500.;Cs=8
 def N(x,y):
-	global B,E,C;A=L(Q((x+y-(B+E))*F));D=L(Q((x-y-(B-E))*F));G=max(abs(A),abs(D))
-	if G==0:B,E=x,y;return
-	C.append(f"SM,{G},{A},{D}");B,E=x,y
+	global B,E,C;A=L(Q((x+y-(B+E))*F));D=L(Q((x-y-(B-E))*F));n=max(abs(A),abs(D))
+	if n==0:B,E=x,y;return
+	s=min(n/2,Vm*Vm/(2*Am));o=a=d=0
+	while o<n:
+		e=min(n-s if s<=o<n-s else o+Cs,n);m=(o+e)/2
+		v=Vm if s<=o<n-s else(2*Am*(m if o<s else n-m))**.5
+		v=min(max(v,1),Vm);p=L(Q(A*e/n));q=L(Q(D*e/n));r=max(1,L(Q((e-o)/v*1e3)))
+		if p-a or q-d:C.append(f"SM,{r},{p-a},{q-d}");a,d=p,q
+		o=e
+	B,E=x,y
 W=10.5
 def O(c):
 	A=ord(c)-32
 	if A<0 or A>94:return 25
 	return G[A*112+1]
-def X(s,scale=.0076):
+def X(s,scale=.0075):
 	s=s.replace('p = ','p='+chr(39)).replace('Z()','Z()'+chr(39));M=True;F=False;B=scale;A=0.25,0.25;C=F
 	for b in s:
 		if b==I:A=0,A[1]-25*B;continue
@@ -69,8 +77,10 @@ def Z(port_path=None):
 	K=.15;J('V')
 	for F in C:
 		J(F)
-		if F.startswith('SM,'):P.sleep(L(F.split(',')[1])/1e3)
-		elif F.startswith('SP,'):P.sleep(K)
+		if F[:3]=='SM,':P.sleep(max(0,L(F.split(',')[1])/1e3-.05))
+		elif F[:3]=='SP,':P.sleep(K)
+	q=J('QM').split(',')
+	while'1'in q[2:4]:P.sleep(.02);q=J('QM').split(',')
 	D.close(E)
 def print(s,**_):X(s);Z()"""
 
