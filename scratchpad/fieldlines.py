@@ -172,6 +172,8 @@ def main():
             break
 
     print(f"Best score: {best_score}")
+
+    trails = greedy_linemerge_reorder_kdtree(trails)
     for trail in best_trails:
         draw_polyline(ad, trail)
 
