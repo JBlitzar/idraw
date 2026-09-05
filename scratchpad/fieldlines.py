@@ -121,11 +121,11 @@ def count_endpoints(trails, charges):
 
 
 def main():
-    # from pyaxidraw import axidraw
-    from fake_ad import FakeAD
+    from pyaxidraw import axidraw
+    # from fake_ad import FakeAD
 
-    # ad = axidraw.AxiDraw()
-    ad = FakeAD()
+    ad = axidraw.AxiDraw()
+    # ad = FakeAD()
     ad.interactive()
     ad.options.speed_pendown = 80
     ad.options.speed_penup = 80
