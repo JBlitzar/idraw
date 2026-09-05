@@ -58,6 +58,9 @@ class FakeAD:
         self.goto(0, 0, track=False)
         self.penup()
 
+    def moveto(self, x, y):
+        self.goto(x,y)
+
     def connect(self):
         return True
 
