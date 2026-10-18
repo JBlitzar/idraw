@@ -53,7 +53,7 @@ def page_paths(image):
     if left < 0 or top < 0:
         raise ValueError("Scaled image does not fit on the paper")
     return [
-        [(left + x * scale, top + y * scale) for x, y in path]
+        [[left + x * scale, top + y * scale] for x, y in path]
         for path in boundary_paths(image)
     ]
 
