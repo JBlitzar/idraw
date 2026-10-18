@@ -88,6 +88,7 @@ def main():
         print("FakeAD preview; gray rectangle is the paper.", flush=True)
     else:
         ad = axidraw.AxiDraw()
+        ad.options.model = 2
         print("Using real AxiDraw.", flush=True)
     ad.interactive()
     if not ad.connect():
