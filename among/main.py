@@ -88,9 +88,9 @@ def main():
         print("FakeAD preview; gray rectangle is the paper.", flush=True)
     else:
         ad = axidraw.AxiDraw()
-        ad.options.model = 2
         print("Using real AxiDraw.", flush=True)
     ad.interactive()
+    ad.options.model = 2
     if not ad.connect():
         raise SystemExit("Could not connect to plotter!")
     for path in paths:
