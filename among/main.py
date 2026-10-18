@@ -59,9 +59,13 @@ def page_paths(image):
 
 
 def main():
-    import turtle
+    is_fake = False
+    try:
+        from pyaxidraw import axidraw
+    except ImportError:
+        from fake_ad import FakeAD
 
-    from fake_ad import FakeAD
+        is_fake = True
 
     with Image.open(SOURCE) as image:
         paths = page_paths(image)
@@ -70,16 +74,24 @@ def main():
             f"{image.width * IMAGE_HEIGHT / image.height:g} x {IMAGE_HEIGHT:g} inches",
             flush=True,
         )
-    print(f"Drawing {len(paths)} exact boundary segments; gray rectangle is the paper.", flush=True)
-    ad = FakeAD(screensize=(425, 550))
-    ad.screen.setup(550, 700)
-    ad.screen.setworldcoordinates(-35, -35, 460, 585)
-    turtle.clear()
-    ad._color = (0.7, 0.7, 0.7)
-    ad.bbox(PAGE_WIDTH, PAGE_HEIGHT)
-    ad._color = (0, 0, 0)
+    print(f"Drawing {len(paths)} exact boundary segments.", flush=True)
+    if is_fake:
+        import turtle
+
+        ad = FakeAD(screensize=(425, 550))
+        ad.screen.setup(550, 700)
+        ad.screen.setworldcoordinates(-35, -35, 460, 585)
+        turtle.clear()
+        ad._color = (0.7, 0.7, 0.7)
+        ad.bbox(PAGE_WIDTH, PAGE_HEIGHT)
+        ad._color = (0, 0, 0)
+        print("FakeAD preview; gray rectangle is the paper.", flush=True)
+    else:
+        ad = axidraw.AxiDraw()
+        print("Using real AxiDraw.", flush=True)
     ad.interactive()
-    ad.connect()
+    if not ad.connect():
+        raise SystemExit("Could not connect to plotter!")
     for path in paths:
         ad.draw_path(path)
     ad.penup()
