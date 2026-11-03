@@ -54,45 +54,53 @@ def main():
 
 
 
-    N = 100
-    R = 4
+    N = 200
+    R = 3
 
     circles = []
     for i in range(N):
         c = rUV()
         c = (c[0], c[1], c[2])#abs(c[2]))
-        ang = random.random() * 0.5
+        ang = random.random() * 0.3
         circles.append([c, ang])
 
-    points = []
-    for c, ang in circles:
+    D, FOV = 10, math.radians(10)
+    zmin = R * R / D            # use 0 if you literally want z > 0
 
-        ref = (0, 0, 1) if abs(c[2]) < 0.99 else (1, 0, 0)
+    points = []                 # list of visible polylines
+    for c, ang in circles:
+        ref = (0, 0, 1) if abs(c[2]) < 0.9 else (1, 0, 0)
         u = normalize(cross(c, ref))
         v = normalize(cross(c, u))
+        cosine, sine = math.cos(ang), math.sin(ang)
 
-        points_3d = []
-        segments = 100
-        cosine = math.cos(ang)
-        sine = math.sin(ang)
-
+        pts3, segments = [], 100
         for i in range(segments):
             phi = (i / segments) * 2 * math.pi
-            cosPhi = math.cos(phi)
-            sinPhi = math.sin(phi)
+            cp, sp = math.cos(phi), math.sin(phi)
+            pts3.append(tuple(R * (cosine * c[k] + sine * (cp * u[k] + sp * v[k]))
+                              for k in range(3)))
 
-            x = cosine * c[0] + sine * (cosPhi * u[0] + sinPhi * v[0])
-            y = cosine * c[1] + sine * (cosPhi * u[1] + sinPhi * v[1])
-            z = cosine * c[2] + sine * (cosPhi * u[2] + sinPhi * v[2])
+        vis = [p[2] > zmin for p in pts3]
+        xy = [proj(p, D, FOV) for p in pts3]
+        xy = [(a[0] + 11 / 2, a[1] + 8.5 / 2) for a in xy]
 
+        if all(vis):
+            xy.append(xy[0]); vis.append(True)
+        elif any(vis):
+            k = vis.index(False)
+            xy, vis = xy[k:] + xy[:k], vis[k:] + vis[:k]
+        else:
+            continue
 
-            points_3d.append((x * R, y * R, z * R))
-
-        xy = [proj(p, D=10, fov=math.radians(10)) for p in points_3d]
-        xy = [(a[0] + 11/2, a[1] + 8.5/2) for a in xy]
-        points.append(xy)
-
-
+        run = []
+        for a, ok in zip(xy, vis):
+            if ok:
+                run.append(a)
+            elif run:
+                points.append(run); run = []
+        if run:
+            points.append(run)
 
     for p in points:
         draw_polyline(ad, p)
