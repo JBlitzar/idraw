@@ -112,7 +112,7 @@ def main():
     points.append(xy)
 
 
-
+    points = greedy_linemerge_reorder_kdtree(points)
     for p in points:
         draw_polyline(ad, p)
 
