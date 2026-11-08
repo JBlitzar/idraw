@@ -1,8 +1,6 @@
-import cv2
 import numpy as np
 from tqdm import trange
 import math
-from PIL import Image
 import random
 from pp import greedy_linemerge_reorder_kdtree
 
