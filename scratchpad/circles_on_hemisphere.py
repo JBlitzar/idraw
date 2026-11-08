@@ -5,7 +5,7 @@ import random
 from pp import greedy_linemerge_reorder_kdtree
 
 
-random.seed(4)
+random.seed(5)
 
 
 def draw_polyline(ad, vertices: list[tuple[float, float]]):
@@ -40,8 +40,8 @@ def main():
     ad = axidraw.AxiDraw()
     # ad = FakeAD()
     ad.interactive()
-    ad.options.speed_pendown = 80
-    ad.options.speed_penup = 80
+    ad.options.speed_pendown = 30
+    ad.options.speed_penup = 30
     ad.options.pen_rate_lower = 100
     ad.options.pen_rate_raise = 100
     # ad.options.const_speed = True
