@@ -36,11 +36,11 @@ proj = lambda p, D, fov: (p[0] / ((D - p[2]) * math.tan(fov / 2)), p[1] / ((D - 
 
 
 def main():
-    # from pyaxidraw import axidraw
-    from fake_ad import FakeAD
+    from pyaxidraw import axidraw
+    # from fake_ad import FakeAD
 
-    # ad = axidraw.AxiDraw()
-    ad = FakeAD()
+    ad = axidraw.AxiDraw()
+    # ad = FakeAD()
     ad.interactive()
     ad.options.speed_pendown = 80
     ad.options.speed_penup = 80
@@ -65,7 +65,7 @@ def main():
         circles.append([c, ang])
 
     D, FOV = 10, math.radians(10)
-    zmin = R * R / D            # use 0 if you literally want z > 0
+    zmin = R * R / D
 
     points = []                 # list of visible polylines
     for c, ang in circles:
@@ -101,6 +101,19 @@ def main():
                 points.append(run); run = []
         if run:
             points.append(run)
+
+    pts3, segments = [], 100
+    for i in range(segments):
+        phi = (i / segments) * 2 * math.pi
+        cp, sp = math.cos(phi), math.sin(phi)
+        pts3.append((R * cp, R * sp, zmin))
+
+    xy = [proj(p, D, FOV) for p in pts3]
+    xy.append(xy[0])
+    xy = [(a[0] + 11 / 2, a[1] + 8.5 / 2) for a in xy]
+    points.append(xy)
+
+
 
     for p in points:
         draw_polyline(ad, p)
